@@ -19,7 +19,7 @@
 
     <modules>
         <module>services/gateway-service</module>
-
+        <module>services/user-service</module>
     </modules>
 
 </project>
