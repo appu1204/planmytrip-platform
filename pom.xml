@@ -21,6 +21,7 @@
         <module>services/gateway-service</module>
         <module>services/user-service</module>
         <module>services/trip-service</module>
+        <module>services/ai-itinerary-service</module>
     </modules>
 
 </project>
