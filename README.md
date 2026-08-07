@@ -36,4 +36,5 @@ planmytrip-platform/
 
 ## Current Status
 
-🚧 Platform Foundation Setup
+🚧 Platform Foundation Setup completed
+👤 User Service | Completed | Backend implemented and API tested
