@@ -29,4 +29,6 @@ public class TripController {
                 .created(URI.create("/api/trips/" + response.getId()))
                 .body(response);
     }
+
+    
 }
