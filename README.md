@@ -36,4 +36,4 @@ planmytrip-platform/
 
 ## Current Status
 
-🚧 Platform Foundation Setup
+🌍 Working on Trip-service
