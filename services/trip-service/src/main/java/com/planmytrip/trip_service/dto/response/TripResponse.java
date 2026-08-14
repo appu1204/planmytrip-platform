@@ -19,7 +19,7 @@ import java.util.UUID;
 public class TripResponse {
 
     private UUID id;
-    private Long userId;
+    private UUID userId;
     private String tripName;
     private String destination;
     private TripType tripType;

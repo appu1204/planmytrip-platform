@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -18,7 +19,7 @@ import java.time.LocalDate;
 public class CreateTripRequest {
 
     @NotNull(message = "userId is required")
-    private Long userId;
+    private UUID userId;
 
     @NotBlank(message = "tripName is required")
     @Size(max = 150, message = "tripName must be at most 150 characters")
