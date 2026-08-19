@@ -1,7 +1,10 @@
 package com.planmytrip.trip_service.controller;
 
 import com.planmytrip.trip_service.dto.request.CreateTripRequest;
+import com.planmytrip.trip_service.dto.request.UpdateTripRequest;
+import com.planmytrip.trip_service.dto.response.PageResponse;
 import com.planmytrip.trip_service.dto.response.TripResponse;
+import com.planmytrip.trip_service.enums.TripStatus;
 import com.planmytrip.trip_service.service.TripService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -30,5 +34,31 @@ public class TripController {
                 .body(response);
     }
 
-    
+    @GetMapping
+    @Operation(summary = "List a user's trips", description = "Optionally filter by status. Sorted newest-first.")
+    public ResponseEntity<PageResponse<TripResponse>> listTrips(
+            @RequestParam UUID userId,
+            @RequestParam(required = false) TripStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(tripService.listTrips(userId, status, page, size));
+    }
+
+    @GetMapping("/{tripId}")
+    @Operation(summary = "Get a single trip by id")
+    public ResponseEntity<TripResponse> getTrip(@PathVariable UUID tripId) {
+        return ResponseEntity.ok(tripService.getTripById(tripId));
+    }
+
+    @PatchMapping("/{tripId}")
+    @Operation(summary = "Edit trip details",
+            description = "Partial update — only send the fields you want to change. " +
+                    "Blocked once the trip is BOOKED or COMPLETED.")
+
+    public ResponseEntity<TripResponse> updateTrip(
+            @PathVariable UUID tripId,
+            @Valid @RequestBody UpdateTripRequest request) {
+
+        return ResponseEntity.ok(tripService.updateTrip(tripId, request));
+            }
 }

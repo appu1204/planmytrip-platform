@@ -4,10 +4,10 @@ import com.planmytrip.trip_service.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcType;
-import org.hibernate.annotations.JdbcTypeCode;
+// import org.hibernate.annotations.JdbcType;
+// import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.SqlTypes;
+// import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,9 +34,10 @@ public class Trip {
      * userId is just a reference to a user managed by user-service.
      */
 
-    @JdbcTypeCode(SqlTypes.BINARY)
-    @Column(name = "user_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID userId;
+    // @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "user_id", nullable = false, updatable = false)
+    private Long userId;    
+    // SOME CHANGES ARE THERE
 
     @Column(name = "trip_name", nullable = false, length = 150)
     private String tripName;

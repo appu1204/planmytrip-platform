@@ -1,6 +1,7 @@
 package com.planmytrip.trip_service.mapper;
 
 import com.planmytrip.trip_service.dto.request.CreateTripRequest;
+import com.planmytrip.trip_service.dto.request.UpdateTripRequest;
 import com.planmytrip.trip_service.dto.response.TripResponse;
 import com.planmytrip.trip_service.entity.Trip;
 import com.planmytrip.trip_service.enums.TripStatus;
@@ -23,6 +24,40 @@ public class TripMapper {
                 .currency(request.getCurrency() != null ? request.getCurrency() : "INR")
                 .status(TripStatus.DRAFT)
                 .build();
+    }
+
+    /**
+     * Applies only the non-null fields from the request onto the existing
+     * trip. Anything omitted from the request is left exactly as it was.
+     */
+    public void applyUpdate(Trip trip, UpdateTripRequest request) {
+        if (request.getTripName() != null) {
+            trip.setTripName(request.getTripName());
+        }
+        if (request.getDestination() != null) {
+            trip.setDestination(request.getDestination());
+        }
+        if (request.getTripType() != null) {
+            trip.setTripType(request.getTripType());
+        }
+        if (request.getStartDate() != null) {
+            trip.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            trip.setEndDate(request.getEndDate());
+        }
+        if (request.getAdults() != null) {
+            trip.setAdults(request.getAdults());
+        }
+        if (request.getChildren() != null) {
+            trip.setChildren(request.getChildren());
+        }
+        if (request.getBudget() != null) {
+            trip.setBudget(request.getBudget());
+        }
+        if (request.getCurrency() != null) {
+            trip.setCurrency(request.getCurrency());
+        }
     }
 
     public TripResponse toResponse(Trip trip) {

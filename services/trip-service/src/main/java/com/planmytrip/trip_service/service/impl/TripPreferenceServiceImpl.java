@@ -58,7 +58,7 @@ public class TripPreferenceServiceImpl implements TripPreferenceService {
 
     @Override
     public TripPreferencesResponse getPreferences(UUID tripId) {
-        getTripOrThrow(tripId); // 404s cleanly if the trip doesn't exist
+        getTripOrThrow(tripId); // 404 cleanly if the trip doesn't exist
 
         List<TripPreferenceType> preferences = tripPreferenceRepository.findByTripId(tripId)
                 .stream()

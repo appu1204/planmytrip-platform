@@ -1,7 +1,13 @@
 package com.planmytrip.trip_service.service;
 
+import com.planmytrip.trip_service.dto.response.PageResponse;
 import com.planmytrip.trip_service.dto.response.TripResponse;
+import com.planmytrip.trip_service.enums.TripStatus;
 import com.planmytrip.trip_service.dto.request.CreateTripRequest;
+import com.planmytrip.trip_service.dto.request.UpdateTripRequest;
+
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,5 +19,23 @@ public interface TripService {
      * Creates a trip in DRAFT status.
      */
     TripResponse createTrip(CreateTripRequest request);
+
+    /**
+     * Backlog story: "Let user see all their trips".
+     * status is optional — null means "all statuses".
+     */
+    PageResponse<TripResponse> listTrips(UUID userId, TripStatus status, int page, int size);
+
+    /**
+     * Fetch a single trip by id. 404 via TripNotFoundException if missing.
+     */
+    TripResponse getTripById(UUID tripId);
+
+    /**
+     * Backlog story: "Let user edit trip details".
+     * Partial update — only non-null fields in the request are applied.
+     * Blocked once the trip is BOOKED or COMPLETED.
+     */
+    TripResponse updateTrip(UUID tripId, UpdateTripRequest request);
 
 }
