@@ -61,4 +61,12 @@ public class TripController {
 
         return ResponseEntity.ok(tripService.updateTrip(tripId, request));
             }
+
+    @DeleteMapping("/{tripId}")
+    @Operation(summary = "Delete a trip",
+            description = "Blocked once the trip is BOOKED or COMPLETED.")
+    public ResponseEntity<Void> deleteTrip(@PathVariable UUID tripId) {
+        tripService.deleteTrip(tripId);
+        return ResponseEntity.noContent().build();
+    }
 }

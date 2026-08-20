@@ -86,6 +86,24 @@ public class TripServiceImpl implements TripService {
 
         return tripMapper.toResponse(saved);
     }
+    
+    @Override
+    @Transactional
+    public void deleteTrip(UUID tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(()-> new TripNotFoundException(tripId));
+        assertTripIsMutable(trip, "delete");
+        
+        tripRepository.delete(trip);
+        log.info("deleted trip id={}", tripId);
+    }
+
+    private void assertTripIsMutable(Trip trip, String action) {
+        if (trip.getStatus() == TripStatus.BOOKED || trip.getStatus() == TripStatus.COMPLETED) {
+            throw new InvalidTripRequestException(
+                    "Cannot " + action + " a trip that is " + trip.getStatus());
+        }
+    }
 
     private void assertTripIsEditable(Trip trip) {
         if (trip.getStatus() == TripStatus.BOOKED || trip.getStatus() == TripStatus.COMPLETED) {

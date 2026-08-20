@@ -38,4 +38,12 @@ public interface TripService {
      */
     TripResponse updateTrip(UUID tripId, UpdateTripRequest request);
 
+    /**
+     * Backlog story: "Let user delete a trip".
+     * Blocked once the trip is BOOKED or COMPLETED — same rule as editing.
+     * Preferences for the trip cascade-delete at the DB level (FK ON DELETE CASCADE).
+     */
+
+    void deleteTrip(UUID tripId);
+
 }
