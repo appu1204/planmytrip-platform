@@ -2,6 +2,7 @@ package com.planmytrip.trip_service.controller;
 
 import com.planmytrip.trip_service.dto.request.CreateTripRequest;
 import com.planmytrip.trip_service.dto.request.UpdateTripRequest;
+import com.planmytrip.trip_service.dto.request.UpdateTripStatusRequest;
 import com.planmytrip.trip_service.dto.response.PageResponse;
 import com.planmytrip.trip_service.dto.response.TripResponse;
 import com.planmytrip.trip_service.enums.TripStatus;
@@ -10,7 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+// import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,4 +70,15 @@ public class TripController {
         tripService.deleteTrip(tripId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{tripId}/status")
+    @Operation(summary = "Move a trip to its next status",
+            description = "Forward-only, one step at a time: DRAFT -> PLAN_READY -> BOOKED -> COMPLETED. " +
+                    "Skipping a step or going backwards is rejected.")
+    public ResponseEntity<TripResponse> updateTripStatus(
+            @PathVariable UUID tripId,
+            @Valid @RequestBody UpdateTripStatusRequest request) {
+        return ResponseEntity.ok(tripService.updateTripStatus(tripId, request.getStatus()));
+    }
+
 }

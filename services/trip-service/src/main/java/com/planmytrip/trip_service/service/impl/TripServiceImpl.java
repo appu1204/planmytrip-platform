@@ -98,6 +98,28 @@ public class TripServiceImpl implements TripService {
         log.info("deleted trip id={}", tripId);
     }
 
+    @Override
+    @Transactional
+    public TripResponse updateTripStatus(UUID tripId, TripStatus newStatus) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new TripNotFoundException(tripId));
+
+        TripStatus current = trip.getStatus();
+        if (!current.canTransitionTo(newStatus)) {
+            throw new InvalidTripRequestException(
+                    "Cannot move trip from " + current + " to " + newStatus
+                            + " — status must progress one step at a time"
+                            + (current.next() != null ? " (next allowed: " + current.next() + ")" : " (this status is terminal)"));
+        }
+
+        trip.setStatus(newStatus);
+        Trip saved = tripRepository.save(trip);
+
+        log.info("Trip id={} status changed {} -> {}", saved.getId(), current, newStatus);
+
+        return tripMapper.toResponse(saved);
+    }
+
     private void assertTripIsMutable(Trip trip, String action) {
         if (trip.getStatus() == TripStatus.BOOKED || trip.getStatus() == TripStatus.COMPLETED) {
             throw new InvalidTripRequestException(

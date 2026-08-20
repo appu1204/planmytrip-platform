@@ -43,7 +43,13 @@ public interface TripService {
      * Blocked once the trip is BOOKED or COMPLETED — same rule as editing.
      * Preferences for the trip cascade-delete at the DB level (FK ON DELETE CASCADE).
      */
-
     void deleteTrip(UUID tripId);
+
+    /**
+     * Backlog story: "Show trip status clearly".
+     * Enforces the forward-only DRAFT -> PLAN_READY -> BOOKED -> COMPLETED
+     * progression — see TripStatus.canTransitionTo for the exact rule.
+     */
+    TripResponse updateTripStatus(UUID tripId, TripStatus newStatus);
 
 }
