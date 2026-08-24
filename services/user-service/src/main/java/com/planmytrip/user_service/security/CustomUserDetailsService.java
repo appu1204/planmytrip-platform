@@ -25,6 +25,24 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "User not found with email: " + email));
 
+        return mapToUserDetails(user);
+    }
+
+    /**
+     * Used by GatewayAuthenticationFilter — the gateway forwards X-User-Id
+     * (the numeric primary key) after validating the JWT itself, so
+     * user-service authenticates by id here instead of re-parsing the token.
+     */
+    @Transactional(readOnly = true)
+    public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found with id: " + id));
+
+        return mapToUserDetails(user);
+    }
+
+    private UserDetails mapToUserDetails(User user) {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())

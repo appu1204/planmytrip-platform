@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -114,7 +116,12 @@ public class AuthServiceImpl implements AuthService {
         loginOtpTokenRepository.save(otpToken);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-        String token = jwtUtil.generateToken(userDetails);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId());
+        claims.put("role", user.getRole().name());
+
+        String token = jwtUtil.generateToken(claims, userDetails);
 
         return ApiResponse.success("Login successful",
                 AuthResponse.of(token, userMapper.toUserResponse(user)));
