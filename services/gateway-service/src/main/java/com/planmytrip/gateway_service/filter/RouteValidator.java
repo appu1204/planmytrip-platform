@@ -23,6 +23,7 @@ public class RouteValidator {
             "/api/user/auth/forgot-password",
             "/api/user/auth/reset-password",
             "/api/user/auth/verify-email",
+            "/api/user/auth/resend-verification",
 
             // Public "browse without login" endpoints
             "/api/trip/popular",

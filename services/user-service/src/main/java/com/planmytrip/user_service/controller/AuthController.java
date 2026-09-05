@@ -5,9 +5,12 @@ import com.planmytrip.user_service.dto.*;
 import com.planmytrip.user_service.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 /**
  * Handles authentication-related APIs
@@ -18,6 +21,9 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     /**
      * POST /api/auth/register
@@ -70,13 +76,22 @@ public class AuthController {
         return ResponseEntity.ok(authService.resetPassword(request));
     }
 
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerification(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.resendVerification(request));
+    }
+
     /**
-     * GET /api/auth/verify-email
-     * Verifies user email using token
+     * GET /api/user/auth/verify-email
+     * Verifies user email using token, then sends the browser to the login page
      */
 
     @GetMapping("/verify-email")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam String token) {
-        return ResponseEntity.ok(authService.verifyEmail(token));
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(frontendUrl + "/login?verified=true"))
+                .build();
     }
 }

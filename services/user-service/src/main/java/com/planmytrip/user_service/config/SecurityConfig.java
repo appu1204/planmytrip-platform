@@ -39,7 +39,8 @@ public class SecurityConfig {
             "/auth/verify-otp",
             "/auth/forgot-password",
             "/auth/reset-password",
-            "/auth/verify-email"
+            "/auth/verify-email",
+            "/auth/resend-verification"
     };
 
     @Bean
