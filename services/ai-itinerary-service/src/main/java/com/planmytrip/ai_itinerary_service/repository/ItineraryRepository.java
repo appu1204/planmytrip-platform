@@ -10,5 +10,8 @@ import com.planmytrip.ai_itinerary_service.entity.Itinerary;
 public interface ItineraryRepository extends JpaRepository<Itinerary, UUID> {
 
     Optional<Itinerary> findByIdAndUserId(UUID id, Long userId);
+    
+    Optional<Itinerary> findByTripIdAndActiveTrue(UUID tripId);
 
+    Optional<Itinerary> findByTripIdOrderByVersionDesc(UUID tripId);
 }
