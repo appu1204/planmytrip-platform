@@ -121,6 +121,46 @@ public class ItineraryServiceImpl implements ItineraryService {
         return ItineraryResponse.fromEntity(itinerary);
     }
 
+
+    // =========================================================================
+    // PHASE 4 — Regenerate the plan
+    // Endpoint: POST /api/v1/itineraries/{itineraryId}/regenerate
+    // Calls Gemini again and stores it as a NEW version/row — the old draft/plan
+    // is left untouched so the user never loses a version they liked.
+    // =========================================================================
+    @Transactional
+    public ItineraryResponse regenerate(UUID itineraryId, GenerateItineraryRequest overrides) {
+        Long userId = currentUserProvider.getUserId();
+        Itinerary previous = getOwnedOrThrow(itineraryId, userId);
+
+        // allow the caller to tweak preferences/budget on regenerate; fall back to the previous request's values
+        GenerateItineraryRequest request = overrides != null ? overrides : rebuildRequestFrom(previous);
+
+        ItineraryPlanData newPlan = geminiClient.generatePlan(request);
+
+        int nextVersion = itineraryRepository.findTopByTripIdOrderByVersionDesc(previous.getTripId())
+                .map(i -> i.getVersion() + 1)
+                .orElse(previous.getVersion() + 1);
+
+        Itinerary regenerated = Itinerary.builder()
+                .tripId(previous.getTripId())
+                .userId(userId)
+                .destination(request.getDestination())
+                .durationDays(previous.getDurationDays())
+                .totalBudget(request.getBudget())
+                .status(ItineraryStatus.DRAFT)
+                .version(nextVersion)
+                .active(false)
+                .planData(newPlan)
+                .build();
+
+        Itinerary saved = itineraryRepository.save(regenerated);
+        log.info("Regenerated itinerary for trip {} -> new version {} (itinerary {})",
+                previous.getTripId(), nextVersion, saved.getId());
+
+        return ItineraryResponse.fromEntity(saved);
+    }
+
     /**
      * Helper method
      * throws NotFoundException if the itinerary is not found or not owned by the user
@@ -130,5 +170,21 @@ public class ItineraryServiceImpl implements ItineraryService {
         return itineraryRepository.findByIdAndUserId(itineraryId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Itinerary " + itineraryId + " not found for the current user"));
+    }
+
+    private GenerateItineraryRequest rebuildRequestFrom(Itinerary previous) {
+        GenerateItineraryRequest request = new GenerateItineraryRequest();
+        request.setTripId(previous.getTripId());
+        request.setDestination(previous.getDestination());
+        request.setBudget(previous.getTotalBudget());
+        request.setStartDate(java.time.LocalDate.now());
+        request.setEndDate(java.time.LocalDate.now().plusDays(previous.getDurationDays() - 1));
+        request.setPersona("Family"); // sensible default; prefer passing `overrides` explicitly from the client
+        GenerateItineraryRequest.Travellers travellers = new GenerateItineraryRequest.Travellers();
+        travellers.setAdults(2);
+        travellers.setChildren(0);
+        request.setTravellers(travellers);
+        request.setPreferences(previous.getPlanData() != null ? previous.getPlanData().getPreferencesUsed() : null);
+        return request;
     }
 }

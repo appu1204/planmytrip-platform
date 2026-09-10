@@ -38,6 +38,12 @@ public class ItineraryController {
 
     private final ItineraryService itineraryService;
 
+    // phase 1:
+    /**
+     * Generate day-by-day plan for a trip
+     * POST /api/v1/ai-itinerary/generate
+     */
+
     @PostMapping("/generate")
     @Operation(
             summary = "Generate a day-by-day AI itinerary for a trip (creates a DRAFT, version 1)"
@@ -53,11 +59,24 @@ public class ItineraryController {
                 .body(response);
     }
 
+    // phase 2:
+    /**
+     * Confirm/save a generated draft as the trip's active itinerary
+     * Save the generated plan as the trip's active itinerary
+     */
+
     @Operation (summary = "Confirm/save a generated draft as the trip's active itinerary")
     @PatchMapping ("/{itineraryId}/save")
     public ResponseEntity<ItineraryResponse> save(@PathVariable UUID itineraryID) {
         return ResponseEntity.ok(itineraryService.save(itineraryID));
     }
+
+
+    // it was to feature phase 3 but i decided to add it to phase 2 becuase phase 2 was simple feature and it took less so implemeted in phase 2 only
+    /**
+     * View full plan for a trip
+     * GET /api/v1/ai-itinerary/{id}
+     */
 
     @Operation(summary = "view one full itinerary (all days + activities + budget)")
     @GetMapping ("/{itineraryId}")
@@ -65,15 +84,41 @@ public class ItineraryController {
         return ResponseEntity.ok(itineraryService.getById(itineraryID));
     }
 
+    /**
+     * List every generated version of a trip (lightweight summaries)
+     * GET /api/v1/ai-itinerary/trip/{tripId}
+     */
+
     @Operation(summary = "List every generated version of a trip (lightweight summaries)")
     @GetMapping("/trip/{tripId}")
     public ResponseEntity<List<ItinerarySummaryResponse>> getHistoryForTrip(@PathVariable UUID tripId) {
         return ResponseEntity.ok(itineraryService.getHistoryForTrip(tripId));
     }
 
+    /**
+     * Get the trip's currently saved/active itinerary
+     * GET /api/v1/ai-itinerary/trip/{tripId}/active
+     */
+
     @Operation (summary = "Get the trip's currently saved/active itinerary")
     @GetMapping("trip/{tripId}/active")
     public ResponseEntity<ItineraryResponse> getActiveForTrip(@PathVariable UUID tripId) {
         return ResponseEntity.ok(itineraryService.getActiveForTrip(tripId));
     }
+
+    // phase 3:
+    /**
+     * Regenerate without losing old version 
+     * POST /api/v1/ai-itinerary/{id}/regenerate
+     */
+
+    @Operation (summary = "Regenerate the plan as a new version, keeping older versions intact")
+    @PostMapping ("/{itineraryId}/regenerate")
+    public ResponseEntity<ItineraryResponse> regenerate(@PathVariable UUID itineraryId, @RequestBody(required = false) GenerateItineraryRequest overrides) {
+        ItineraryResponse response = itineraryService.regenerate(itineraryId, overrides);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+
+
 }
