@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.planmytrip.ai_itinerary_service.dto.request.GenerateItineraryRequest;
+import com.planmytrip.ai_itinerary_service.dto.response.BudgetResponse;
 import com.planmytrip.ai_itinerary_service.dto.response.ItineraryPlanData;
 import com.planmytrip.ai_itinerary_service.dto.response.ItineraryResponse;
 import com.planmytrip.ai_itinerary_service.dto.response.ItinerarySummaryResponse;
@@ -128,6 +129,7 @@ public class ItineraryServiceImpl implements ItineraryService {
     // Calls Gemini again and stores it as a NEW version/row — the old draft/plan
     // is left untouched so the user never loses a version they liked.
     // =========================================================================
+    
     @Transactional
     public ItineraryResponse regenerate(UUID itineraryId, GenerateItineraryRequest overrides) {
         Long userId = currentUserProvider.getUserId();
@@ -159,6 +161,21 @@ public class ItineraryServiceImpl implements ItineraryService {
                 previous.getTripId(), nextVersion, saved.getId());
 
         return ItineraryResponse.fromEntity(saved);
+    }
+
+    /**
+     *PHASE 5 — Estimated budget breakdown
+     * Endpoint: GET /api/v1/itineraries/{itineraryId}/budget
+     * The breakdown is already produced by Gemini during generation (see
+     * ItineraryPlanData.budgetBreakdown); this just exposes it as its own
+     * lightweight resource for the "Estimated cost" widget on the frontend.
+    */
+   
+    @Transactional(readOnly = true)
+    public BudgetResponse getBudgetBreakdown(UUID itineraryId) {
+        Long userId = currentUserProvider.getUserId();
+        Itinerary itinerary = getOwnedOrThrow(itineraryId, userId);
+        return BudgetResponse.fromEntity(itinerary);
     }
 
     /**

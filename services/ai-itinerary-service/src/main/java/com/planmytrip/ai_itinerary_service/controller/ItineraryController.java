@@ -1,6 +1,7 @@
 package com.planmytrip.ai_itinerary_service.controller;
 
 import com.planmytrip.ai_itinerary_service.dto.request.GenerateItineraryRequest;
+import com.planmytrip.ai_itinerary_service.dto.response.BudgetResponse;
 import com.planmytrip.ai_itinerary_service.dto.response.ItineraryResponse;
 import com.planmytrip.ai_itinerary_service.dto.response.ItinerarySummaryResponse;
 import com.planmytrip.ai_itinerary_service.service.ItineraryService;
@@ -119,6 +120,16 @@ public class ItineraryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // phase 4:
+    /**
+     * Budget breakdown
+     * GET /api/v1/ai-itinerary/{id}/budget
+     */
 
+    @Operation (summary = "Get just the estimated cost breakdown for an itinerary")
+    @GetMapping ("/{itineraryId}/budget")
+    public ResponseEntity<BudgetResponse> getBudget(@PathVariable UUID itineraryId) {
+        return ResponseEntity.ok(itineraryService.getBudgetBreakdown(itineraryId));
+    }
 
 }
