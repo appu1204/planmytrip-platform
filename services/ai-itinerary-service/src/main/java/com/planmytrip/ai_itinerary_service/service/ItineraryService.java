@@ -18,4 +18,6 @@ public interface ItineraryService {
     List<ItinerarySummaryResponse> getHistoryForTrip(UUID tripId);
 
     ItineraryResponse getActiveForTrip(UUID tripId);
+
+    ItineraryResponse regenerate(UUID itineraryId, GenerateItineraryRequest overrides);
 }
