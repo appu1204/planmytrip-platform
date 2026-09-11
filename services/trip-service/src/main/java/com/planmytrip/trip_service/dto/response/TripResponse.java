@@ -32,4 +32,19 @@ public class TripResponse {
     private TripStatus status;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("name")
+    public String getName() {
+        return tripName;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("checkIn")
+    public LocalDate getCheckIn() {
+        return startDate;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("checkOut")
+    public LocalDate getCheckOut() {
+        return endDate;
+    }
 }

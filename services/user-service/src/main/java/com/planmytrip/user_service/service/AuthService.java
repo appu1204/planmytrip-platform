@@ -18,4 +18,6 @@ public interface AuthService {
     ApiResponse<Void> verifyEmail(String token);
 
     ApiResponse<Void> resendVerification(ForgotPasswordRequest request);
+
+    ApiResponse<Void> resendOtp(ResendOtpRequest request);
 }

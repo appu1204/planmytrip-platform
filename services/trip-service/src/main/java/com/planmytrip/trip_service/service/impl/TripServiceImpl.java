@@ -49,7 +49,7 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public PageResponse<TripResponse> listTrips(UUID userId, TripStatus status, int page, int size) {
+    public PageResponse<TripResponse> listTrips(Long userId, TripStatus status, int page, int size) {
         int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int safePage = Math.max(page, 0);
 
@@ -106,10 +106,12 @@ public class TripServiceImpl implements TripService {
 
         TripStatus current = trip.getStatus();
         if (!current.canTransitionTo(newStatus)) {
+            String allowedMsg = (current.next() != null)
+                    ? " (next allowed: " + current.next() + ", or CANCELLED)"
+                    : " (this status is terminal)";
             throw new InvalidTripRequestException(
                     "Cannot move trip from " + current + " to " + newStatus
-                            + " — status must progress one step at a time"
-                            + (current.next() != null ? " (next allowed: " + current.next() + ")" : " (this status is terminal)"));
+                            + " — status must progress one step at a time or be CANCELLED" + allowedMsg);
         }
 
         trip.setStatus(newStatus);
@@ -128,7 +130,7 @@ public class TripServiceImpl implements TripService {
     }
 
     private void assertTripIsEditable(Trip trip) {
-        if (trip.getStatus() == TripStatus.BOOKED || trip.getStatus() == TripStatus.COMPLETED) {
+        if (trip.getStatus() == TripStatus.BOOKED || trip.getStatus() == TripStatus.COMPLETED || trip.getStatus() == TripStatus.CANCELLED) {
             throw new InvalidTripRequestException(
                     "Cannot edit a trip that is " + trip.getStatus());
         }

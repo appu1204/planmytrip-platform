@@ -51,7 +51,6 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
             ServerHttpRequest mutatedRequest = request.mutate()
                     .headers(headers -> {
-                        headers.remove("Authorization");
                         headers.set("X-User-Id", userId);
                     })
                     .build();

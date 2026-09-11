@@ -1,5 +1,6 @@
 package com.planmytrip.trip_service.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.planmytrip.trip_service.enums.TripType;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -18,11 +19,11 @@ import java.time.LocalDate;
 
 public class CreateTripRequest {
 
-    @NotNull(message = "userId is required")  
     private Long userId;
 
     @NotBlank(message = "tripName is required")
     @Size(max = 150, message = "tripName must be at most 150 characters")
+    @JsonAlias({"name", "trip_name"})
     private String tripName;
 
     @NotBlank(message = "destination is required")
@@ -34,9 +35,11 @@ public class CreateTripRequest {
 
     @NotNull(message = "startDate is required")
     @FutureOrPresent(message = "startDate cannot be in the past")
+    @JsonAlias({"checkIn", "start_date"})
     private LocalDate startDate;
 
     @NotNull(message = "endDate is required")
+    @JsonAlias({"checkOut", "end_date"})
     private LocalDate endDate;
 
     @NotNull(message = "adults is required")

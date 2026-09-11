@@ -62,7 +62,7 @@ public class GeminiClientImpl implements GeminiClient {
 
             log.info("Calling Gemini API with model: {}", model);
 
-            raw = geminiWebClient.post()
+            String rawResponse = geminiWebClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/{model}:generateContent")
                             .build(model)
@@ -71,7 +71,13 @@ public class GeminiClientImpl implements GeminiClient {
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(body)
                     .retrieve()
-                    .bodyToMono(JsonNode.class)
+                    .bodyToMono(String.class)
+                    .retryWhen(reactor.util.retry.Retry.backoff(3, Duration.ofSeconds(1))
+                            .filter(t -> t instanceof WebClientResponseException &&
+                                    (((WebClientResponseException) t).getStatusCode().is5xxServerError() ||
+                                     ((WebClientResponseException) t).getStatusCode().value() == 429))
+                            .doBeforeRetry(sig -> log.warn("Gemini API overloaded or rate limited (attempt {}). Retrying...", sig.totalRetries() + 1))
+                    )
                     .timeout(
                             Duration.of(
                                     timeoutSeconds,
@@ -80,6 +86,7 @@ public class GeminiClientImpl implements GeminiClient {
                     )
                     .block();
 
+            raw = objectMapper.readTree(rawResponse);
             log.debug("Gemini raw response: {}", raw);
 
         } catch (WebClientResponseException e) {

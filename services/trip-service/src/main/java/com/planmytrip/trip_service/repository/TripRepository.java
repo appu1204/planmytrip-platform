@@ -14,8 +14,8 @@ import java.util.UUID;
 public interface TripRepository extends JpaRepository<Trip, UUID> {
     // Phase 3 will add: List<Trip> findByUserId(Long userId); -> but earlier added
 
-    Page<Trip> findByUserId(UUID userId, Pageable pageable);
-    Page<Trip> findByUserIdAndStatus(UUID userId, TripStatus status, Pageable pageable);
+    Page<Trip> findByUserId(Long userId, Pageable pageable);
+    Page<Trip> findByUserIdAndStatus(Long userId, TripStatus status, Pageable pageable);
 
     
 }

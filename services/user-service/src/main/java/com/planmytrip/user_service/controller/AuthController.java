@@ -83,6 +83,15 @@ public class AuthController {
     }
 
     /**
+     * POST /api/user/auth/resend-otp
+     * Resends OTP to user email
+     */
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiResponse<Void>> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
+        return ResponseEntity.ok(authService.resendOtp(request));
+    }
+
+    /**
      * GET /api/user/auth/verify-email
      * Verifies user email using token, then sends the browser to the login page
      */

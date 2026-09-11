@@ -16,4 +16,8 @@ public interface ItineraryRepository extends JpaRepository<Itinerary, UUID> {
     Optional<Itinerary> findByTripIdOrderByVersionDesc(UUID tripId);
 
     Optional<Itinerary> findTopByTripIdOrderByVersionDesc(UUID tripId);
+
+    java.util.List<Itinerary> findAllByTripIdOrderByVersionDesc(UUID tripId);
+
+    java.util.List<Itinerary> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

@@ -37,21 +37,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                      @NonNull HttpServletResponse response,
                                      @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
-
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-
-            if (jwtUtil.isValid(token)) {
-                Long userId = jwtUtil.extractUserId(token);
-
+        // 1. Check for X-User-Id header forwarded by API Gateway
+        String xUserId = request.getHeader("X-User-Id");
+        if (xUserId != null && !xUserId.isBlank()) {
+            try {
+                Long userId = Long.parseLong(xUserId.trim());
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
                 authentication.setDetails(request);
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                log.debug("Rejected request to {} - invalid/expired token", request.getRequestURI());
+            } catch (NumberFormatException e) {
+                log.warn("Invalid X-User-Id header: {}", xUserId);
+            }
+        }
+
+        // 2. If not authenticated via X-User-Id, check Authorization: Bearer token (for direct service calls)
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            String header = request.getHeader("Authorization");
+
+            if (header != null && header.startsWith("Bearer ")) {
+                String token = header.substring(7);
+
+                if (jwtUtil.isValid(token)) {
+                    Long userId = jwtUtil.extractUserId(token);
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+                    authentication.setDetails(request);
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    log.debug("Rejected request to {} - invalid/expired token", request.getRequestURI());
+                }
             }
         }
 

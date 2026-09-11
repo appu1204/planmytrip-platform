@@ -40,9 +40,11 @@ public class Itinerary {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "CHAR(36)")
     private UUID id;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "trip_id", nullable = false, columnDefinition = "CHAR(36)")
     private UUID tripId;
 

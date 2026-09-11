@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/trips/{tripId}/preferences")
+@RequestMapping("/trips/{tripId}/preferences")
 @RequiredArgsConstructor
 @Tag(name = "Trip Preferences", description = "What the traveller enjoys, for a specific trip")
 public class TripPreferenceController {

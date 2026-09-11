@@ -200,6 +200,21 @@ public class AuthServiceImpl implements AuthService {
         return ApiResponse.success("Verification link sent");
     }
 
+    @Override
+    @Transactional
+    public ApiResponse<Void> resendOtp(ResendOtpRequest request) {
+        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        loginOtpTokenRepository.deleteAllByUserId(user.getId());
+
+        String otp = generateOtp();
+        saveOtp(user, otp);
+        emailService.sendOtpEmail(user.getEmail(), user.getFullName(), otp);
+
+        return ApiResponse.success("OTP sent successfully");
+    }
+
     // =====================================================
     // PRIVATE HELPERS
     // =====================================================

@@ -9,6 +9,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +42,75 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex,
+                                                           HttpServletRequest request) {
+        log.warn("Malformed JSON or unreadable request body on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        String message = "Malformed request body or invalid value provided";
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            message = ex.getCause().getMessage();
+        }
+
+        ErrorResponse body = ErrorResponse.builder()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Malformed Request")
+                .message(message)
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
+                                                            HttpServletRequest request) {
+        log.warn("Missing parameter on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        ErrorResponse body = ErrorResponse.builder()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Missing Parameter")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                            HttpServletRequest request) {
+        log.warn("Type mismatch on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        ErrorResponse body = ErrorResponse.builder()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Type Mismatch")
+                .message("Invalid value for parameter: " + ex.getName())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex,
+                                                               HttpServletRequest request) {
+        log.warn("Resource not found on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        ErrorResponse body = ErrorResponse.builder()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     @ExceptionHandler(InvalidTripRequestException.class)

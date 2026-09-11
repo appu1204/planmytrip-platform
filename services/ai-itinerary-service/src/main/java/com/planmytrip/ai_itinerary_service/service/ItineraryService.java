@@ -23,4 +23,22 @@ public interface ItineraryService {
     ItineraryResponse regenerate(UUID itineraryId, GenerateItineraryRequest overrides);
 
     BudgetResponse getBudgetBreakdown(UUID itineraryId);
+
+    ItineraryResponse saveItineraryForTrip(UUID tripId, java.util.Map<String, Object> payload);
+
+    ItineraryResponse generateForTrip(UUID tripId, GenerateItineraryRequest request);
+
+    ItineraryResponse regenerateForTrip(UUID tripId, GenerateItineraryRequest overrides);
+
+    BudgetResponse getBudgetForTrip(UUID tripId);
+
+    java.util.Map<String, Object> saveNotes(UUID tripId, String notes);
+
+    java.util.List<java.util.Map<String, Object>> getRoute(UUID tripId);
+
+    ItineraryResponse addDay(UUID tripId, java.util.Map<String, Object> day);
+
+    ItineraryResponse addActivity(UUID tripId, String dayId, java.util.Map<String, Object> activity);
+
+    ItineraryResponse deleteActivity(UUID tripId, String dayId, String activityId);
 }

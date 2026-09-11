@@ -77,7 +77,7 @@ public class TripPreferenceServiceImpl implements TripPreferenceService {
     }
 
     private void assertTripIsEditable(Trip trip) {
-        if (trip.getStatus() == TripStatus.BOOKED || trip.getStatus() == TripStatus.COMPLETED) {
+        if (trip.getStatus() == TripStatus.BOOKED || trip.getStatus() == TripStatus.COMPLETED || trip.getStatus() == TripStatus.CANCELLED) {
             throw new InvalidTripRequestException(
                     "Cannot change preferences for a trip that is " + trip.getStatus());
         }

@@ -19,10 +19,12 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 // import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -68,8 +70,8 @@ public class ItineraryController {
 
     @Operation (summary = "Confirm/save a generated draft as the trip's active itinerary")
     @PatchMapping ("/{itineraryId}/save")
-    public ResponseEntity<ItineraryResponse> save(@PathVariable UUID itineraryID) {
-        return ResponseEntity.ok(itineraryService.save(itineraryID));
+    public ResponseEntity<ItineraryResponse> save(@PathVariable("itineraryId") UUID itineraryId) {
+        return ResponseEntity.ok(itineraryService.save(itineraryId));
     }
 
 
@@ -81,8 +83,8 @@ public class ItineraryController {
 
     @Operation(summary = "view one full itinerary (all days + activities + budget)")
     @GetMapping ("/{itineraryId}")
-    public ResponseEntity<ItineraryResponse> getById(@PathVariable UUID itineraryID) {
-        return ResponseEntity.ok(itineraryService.getById(itineraryID));
+    public ResponseEntity<ItineraryResponse> getById(@PathVariable("itineraryId") UUID itineraryId) {
+        return ResponseEntity.ok(itineraryService.getById(itineraryId));
     }
 
     /**
@@ -92,7 +94,7 @@ public class ItineraryController {
 
     @Operation(summary = "List every generated version of a trip (lightweight summaries)")
     @GetMapping("/trip/{tripId}")
-    public ResponseEntity<List<ItinerarySummaryResponse>> getHistoryForTrip(@PathVariable UUID tripId) {
+    public ResponseEntity<List<ItinerarySummaryResponse>> getHistoryForTrip(@PathVariable("tripId") UUID tripId) {
         return ResponseEntity.ok(itineraryService.getHistoryForTrip(tripId));
     }
 
@@ -102,9 +104,88 @@ public class ItineraryController {
      */
 
     @Operation (summary = "Get the trip's currently saved/active itinerary")
-    @GetMapping("trip/{tripId}/active")
-    public ResponseEntity<ItineraryResponse> getActiveForTrip(@PathVariable UUID tripId) {
+    @GetMapping({"/trip/{tripId}/active", "/trip/{tripId}/itinerary", "/trips/{tripId}/itinerary"})
+    public ResponseEntity<ItineraryResponse> getActiveForTrip(@PathVariable("tripId") UUID tripId) {
         return ResponseEntity.ok(itineraryService.getActiveForTrip(tripId));
+    }
+
+    @Operation(summary = "Save or update a trip's itinerary")
+    @PutMapping({"/trip/{tripId}/itinerary", "/trips/{tripId}/itinerary", "/trip/{tripId}", "/trips/{tripId}"})
+    public ResponseEntity<ItineraryResponse> saveItineraryForTrip(
+            @PathVariable("tripId") UUID tripId,
+            @RequestBody(required = false) java.util.Map<String, Object> payload) {
+        return ResponseEntity.ok(itineraryService.saveItineraryForTrip(tripId, payload));
+    }
+
+    @Operation(summary = "Generate an AI itinerary scoped to an existing trip")
+    @PostMapping({"/trips/{tripId}/itinerary/generate", "/trip/{tripId}/itinerary/generate", "/trip/{tripId}/generate"})
+    public ResponseEntity<ItineraryResponse> generateForTrip(
+            @PathVariable("tripId") UUID tripId,
+            @RequestBody(required = false) GenerateItineraryRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(itineraryService.generateForTrip(tripId, request));
+    }
+
+    @Operation(summary = "Regenerate an AI itinerary scoped to an existing trip")
+    @PostMapping({"/trips/{tripId}/itinerary/regenerate", "/trip/{tripId}/itinerary/regenerate", "/trip/{tripId}/regenerate"})
+    public ResponseEntity<ItineraryResponse> regenerateForTrip(
+            @PathVariable("tripId") UUID tripId,
+            @RequestBody(required = false) GenerateItineraryRequest overrides) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(itineraryService.regenerateForTrip(tripId, overrides));
+    }
+
+    @Operation(summary = "Get budget breakdown for a trip")
+    @GetMapping({"/trips/{tripId}/budget", "/trip/{tripId}/budget"})
+    public ResponseEntity<BudgetResponse> getBudgetForTrip(@PathVariable("tripId") UUID tripId) {
+        return ResponseEntity.ok(itineraryService.getBudgetForTrip(tripId));
+    }
+
+    @Operation(summary = "Save notes for a trip")
+    @PatchMapping({"/trips/{tripId}/notes", "/trip/{tripId}/notes"})
+    public ResponseEntity<?> saveNotes(
+            @PathVariable("tripId") UUID tripId,
+            @RequestBody(required = false) java.util.Map<String, Object> payload) {
+        String notes = (payload != null && payload.get("notes") != null) ? payload.get("notes").toString() : "";
+        return ResponseEntity.ok(itineraryService.saveNotes(tripId, notes));
+    }
+
+    @Operation(summary = "Get map route stops for a trip")
+    @GetMapping({"/trips/{tripId}/route", "/trip/{tripId}/route"})
+    public ResponseEntity<?> getRoute(@PathVariable("tripId") UUID tripId) {
+        return ResponseEntity.ok(itineraryService.getRoute(tripId));
+    }
+
+    @Operation(summary = "Optimize route stops for a trip")
+    @PostMapping({"/trips/{tripId}/route/optimize", "/trip/{tripId}/route/optimize"})
+    public ResponseEntity<?> optimizeRoute(@PathVariable("tripId") UUID tripId) {
+        return ResponseEntity.ok(itineraryService.getRoute(tripId));
+    }
+
+    @Operation(summary = "Add a day to an itinerary")
+    @PostMapping({"/trips/{tripId}/itinerary/days", "/trip/{tripId}/itinerary/days"})
+    public ResponseEntity<ItineraryResponse> addDay(
+            @PathVariable("tripId") UUID tripId,
+            @RequestBody java.util.Map<String, Object> day) {
+        return ResponseEntity.ok(itineraryService.addDay(tripId, day));
+    }
+
+    @Operation(summary = "Add an activity to an itinerary day")
+    @PostMapping({"/trips/{tripId}/itinerary/days/{dayId}/activities", "/trip/{tripId}/itinerary/days/{dayId}/activities"})
+    public ResponseEntity<ItineraryResponse> addActivity(
+            @PathVariable("tripId") UUID tripId,
+            @PathVariable("dayId") String dayId,
+            @RequestBody java.util.Map<String, Object> activity) {
+        return ResponseEntity.ok(itineraryService.addActivity(tripId, dayId, activity));
+    }
+
+    @Operation(summary = "Delete an activity from an itinerary day")
+    @DeleteMapping({"/trips/{tripId}/itinerary/days/{dayId}/activities/{activityId}", "/trip/{tripId}/itinerary/days/{dayId}/activities/{activityId}"})
+    public ResponseEntity<ItineraryResponse> deleteActivity(
+            @PathVariable("tripId") UUID tripId,
+            @PathVariable("dayId") String dayId,
+            @PathVariable("activityId") String activityId) {
+        return ResponseEntity.ok(itineraryService.deleteActivity(tripId, dayId, activityId));
     }
 
     // phase 3:
@@ -115,7 +196,7 @@ public class ItineraryController {
 
     @Operation (summary = "Regenerate the plan as a new version, keeping older versions intact")
     @PostMapping ("/{itineraryId}/regenerate")
-    public ResponseEntity<ItineraryResponse> regenerate(@PathVariable UUID itineraryId, @RequestBody(required = false) GenerateItineraryRequest overrides) {
+    public ResponseEntity<ItineraryResponse> regenerate(@PathVariable("itineraryId") UUID itineraryId, @RequestBody(required = false) GenerateItineraryRequest overrides) {
         ItineraryResponse response = itineraryService.regenerate(itineraryId, overrides);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -128,7 +209,7 @@ public class ItineraryController {
 
     @Operation (summary = "Get just the estimated cost breakdown for an itinerary")
     @GetMapping ("/{itineraryId}/budget")
-    public ResponseEntity<BudgetResponse> getBudget(@PathVariable UUID itineraryId) {
+    public ResponseEntity<BudgetResponse> getBudget(@PathVariable("itineraryId") UUID itineraryId) {
         return ResponseEntity.ok(itineraryService.getBudgetBreakdown(itineraryId));
     }
 

@@ -24,7 +24,7 @@ public interface TripService {
      * Backlog story: "Let user see all their trips".
      * status is optional — null means "all statuses".
      */
-    PageResponse<TripResponse> listTrips(UUID userId, TripStatus status, int page, int size);
+    PageResponse<TripResponse> listTrips(Long userId, TripStatus status, int page, int size);
 
     /**
      * Fetch a single trip by id. 404 via TripNotFoundException if missing.

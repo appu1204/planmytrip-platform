@@ -3,6 +3,7 @@ package com.planmytrip.trip_service.dto.request;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.planmytrip.trip_service.enums.TripType;
 
 import jakarta.validation.constraints.DecimalMin;
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 public class UpdateTripRequest {
 
     @Size(max = 150, message = "tripName must be at most 150 characters")
+    @JsonAlias({"name", "trip_name"})
     private String tripName;
 
     @Size(max = 150, message = "destination must be at most 150 characters")
@@ -28,8 +30,10 @@ public class UpdateTripRequest {
 
     private TripType tripType;
 
+    @JsonAlias({"checkIn", "start_date"})
     private LocalDate startDate;
 
+    @JsonAlias({"checkOut", "end_date"})
     private LocalDate endDate;
 
     @Min(value = 1, message = "adults must be at least 1")

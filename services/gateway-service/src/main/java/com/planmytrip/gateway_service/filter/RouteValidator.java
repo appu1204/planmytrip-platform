@@ -20,6 +20,7 @@ public class RouteValidator {
             "/api/user/auth/register",
             "/api/user/auth/login",
             "/api/user/auth/verify-otp",
+            "/api/user/auth/resend-otp",
             "/api/user/auth/forgot-password",
             "/api/user/auth/reset-password",
             "/api/user/auth/verify-email",
