@@ -1,0 +1,24 @@
+name: PlanMyTrip CD
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: |
+          docker build -t planmytrip-gateway:latest services/gateway-service
+          docker build -t planmytrip-user:latest services/user-service
+          docker build -t planmytrip-trip:latest services/trip-service
+          docker build -t planmytrip-ai-itinerary:latest services/ai-itinerary-service
+
+      - name: Verify Docker images
+        run: docker images
