@@ -86,11 +86,17 @@ public class GlobalExceptionHandler {
                                                             HttpServletRequest request) {
         log.warn("Type mismatch on {}: {}", request.getRequestURI(), ex.getMessage());
 
+        String message = "Invalid value for parameter: " + ex.getName();
+        Throwable rootCause = ex.getRootCause();
+        if (rootCause != null && rootCause.getMessage() != null && !rootCause.getMessage().isBlank()) {
+            message = rootCause.getMessage();
+        }
+
         ErrorResponse body = ErrorResponse.builder()
                 .timestamp(OffsetDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Type Mismatch")
-                .message("Invalid value for parameter: " + ex.getName())
+                .message(message)
                 .path(request.getRequestURI())
                 .build();
 
