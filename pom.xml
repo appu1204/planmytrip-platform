@@ -22,7 +22,6 @@
         <module>services/user-service</module>
         <module>services/trip-service</module>
         <module>services/ai-itinerary-service</module>
-        <module>services/booking-service</module>
     </modules>
 
 </project>
