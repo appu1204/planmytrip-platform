@@ -36,4 +36,4 @@ planmytrip-platform/
 
 ## Current Status
 
-🤖🌍 Working on Ai-Itinerary-Service
+🤖🌍 Working on booking-service
