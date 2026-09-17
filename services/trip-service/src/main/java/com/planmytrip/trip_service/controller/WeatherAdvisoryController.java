@@ -26,7 +26,9 @@ public class WeatherAdvisoryController {
             description = "Evaluates destination atmospheric conditions and natural hazard risks (heavy rain, wind gusts, landslides) for the trip")
     public ResponseEntity<WeatherAdvisoryResponse> getTripWeatherAdvisory(@PathVariable UUID tripId) {
         TripResponse trip = tripService.getTripById(tripId);
-        String destination = (trip.getDestination() != null) ? trip.getDestination() : "Kerala";
+        String destination = (trip.getDestination() != null && !trip.getDestination().isBlank())
+                ? trip.getDestination()
+                : "your destination";
         return ResponseEntity.ok(buildAdvisory(destination));
     }
 
@@ -34,7 +36,7 @@ public class WeatherAdvisoryController {
     @Operation(summary = "Check weather safety by destination name",
             description = "On-demand natural hazard clearance check for immediate or upcoming tours")
     public ResponseEntity<WeatherAdvisoryResponse> checkWeatherSafety(
-            @RequestParam(defaultValue = "Kerala") String destination) {
+            @RequestParam(defaultValue = "your destination") String destination) {
         return ResponseEntity.ok(buildAdvisory(destination));
     }
 

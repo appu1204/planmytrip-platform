@@ -1,0 +1,31 @@
+services:
+
+  gateway-service:
+    image: planmytrip-gateway:1.0
+    container_name: planmytrip-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./services/gateway-service/src/main/resources/application-dev.properties:/app/config/application-dev.properties:ro
+    depends_on:
+      - user-service
+      - trip-service
+      - ai-itinerary-service
+
+  user-service:
+    image: planmytrip-user:1.0
+    container_name: planmytrip-user
+    ports:
+      - "8081:8081"
+
+  trip-service:
+    image: planmytrip-trip:1.0
+    container_name: planmytrip-trip
+    ports:
+      - "8082:8082"
+
+  ai-itinerary-service:
+    image: planmytrip-ai-itinerary:1.0
+    container_name: planmytrip-ai-itinerary
+    ports:
+      - "8083:8083"
