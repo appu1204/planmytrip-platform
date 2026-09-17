@@ -38,6 +38,13 @@ planmytrip-platform/
 
 🚧 Platform Foundation Setup completed
 
+🌐 Gateway Service | Completed | API routing configured and tested
+
 👤 User Service | Completed | Backend implemented and API tested
 
-🌍 Working on Trip-service
+🌍 Trip Service | Completed | Backend implemented and API tested
+
+🤖 AI Itinerary Service | Completed | Backend implemented and API tested
+
+🎫 Working on Booking Service
+
