@@ -38,6 +38,11 @@ public class GlobalExceptionHandler {
                 "Hotel search is temporarily unavailable. Please try again shortly.");
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Malformed JSON request or invalid field: " + ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()

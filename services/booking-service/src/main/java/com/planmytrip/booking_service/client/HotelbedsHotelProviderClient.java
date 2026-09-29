@@ -110,13 +110,11 @@ public class HotelbedsHotelProviderClient implements HotelProviderClient {
     }
 
     @Override
+    @Retryable(retryFor = RestClientException.class, maxAttempts = 2, backoff = @Backoff(delay = 1000))
     public HotelDetailDto getDetail(String hotelId, LocalDate checkIn, LocalDate checkOut) {
+        HotelDetailDto cached = detailCache.get(hotelId);
         try {
-            // 1. Static content (name, amenities, rating, description)
-            Map<?, ?> contentResponse = getFromHotelbeds(
-                    hotelbedsProperties.getContentBaseUrl() + "/hotels/" + hotelId + "/details?language=ENG");
-
-            // 2. Live rooms/rates for this one hotel over the requested dates
+            // 1. Live rooms/rates for this hotel over the requested dates (Critical API)
             Map<String, Object> availabilityBody = new HashMap<>();
             availabilityBody.put("stay", Map.of("checkIn", checkIn.toString(), "checkOut", checkOut.toString()));
             availabilityBody.put("occupancies", List.of(buildOccupancy(2, 0)));
@@ -125,14 +123,27 @@ public class HotelbedsHotelProviderClient implements HotelProviderClient {
             Map<?, ?> availabilityResponse = postToHotelbeds(
                     hotelbedsProperties.getBookingBaseUrl() + "/hotels", availabilityBody);
 
+            // 2. Static content (name, amenities, rating, description) - Non-critical enrichment
+            Map<?, ?> contentResponse = null;
+            try {
+                contentResponse = getFromHotelbeds(
+                        hotelbedsProperties.getContentBaseUrl() + "/hotels/" + hotelId + "/details?language=ENG");
+            } catch (Exception contentEx) {
+                log.warn("Hotelbeds content API timed out or failed for hotelId={}, proceeding with live availability data: {}",
+                        hotelId, contentEx.getMessage());
+            }
+
             HotelDetailDto detail = mergeIntoDetailDto(hotelId, contentResponse, availabilityResponse);
-            detailCache.put(hotelId, detail);
-            return detail;
+            if (detail != null) {
+                detailCache.put(hotelId, detail);
+                return detail;
+            }
+            if (cached != null) return cached;
+            throw new HotelNotFoundException(hotelId);
 
         } catch (RestClientException ex) {
             log.warn("Hotelbeds detail lookup failed for hotelId={}, falling back to cache. Reason: {}",
                     hotelId, ex.getMessage());
-            HotelDetailDto cached = detailCache.get(hotelId);
             if (cached != null) {
                 return cached;
             }
@@ -170,7 +181,7 @@ public class HotelbedsHotelProviderClient implements HotelProviderClient {
             Map<String, Object> body = new HashMap<>();
             body.put("holder", holder);
             body.put("rooms", List.of(room));
-            body.put("clientReference", "PlanMyTrip-" + UUID.randomUUID());
+            body.put("clientReference", ("PMT" + UUID.randomUUID().toString().replace("-", "")).substring(0, 20));
 
             Map<?, ?> response = postToHotelbeds(hotelbedsProperties.getBookingBaseUrl() + "/bookings", body);
             Map<?, ?> booking = (Map<?, ?>) response.get("booking");
@@ -182,8 +193,11 @@ public class HotelbedsHotelProviderClient implements HotelProviderClient {
             return new ProviderBookingResult(providerBookingId, true, null);
 
         } catch (RestClientException ex) {
+            String details = (ex instanceof org.springframework.web.client.RestClientResponseException rre)
+                    ? rre.getResponseBodyAsString()
+                    : ex.getMessage();
             log.error("Hotelbeds booking failed for hotelId={}, rateKey={}: {}",
-                    hotelId, roomTypeId, ex.getMessage());
+                    hotelId, roomTypeId, details, ex);
             return new ProviderBookingResult(null, false, "PROVIDER_BOOKING_FAILED");
         }
     }
@@ -373,7 +387,33 @@ public class HotelbedsHotelProviderClient implements HotelProviderClient {
         Object hotelObj = contentResponse != null ? contentResponse.get("hotel") : null;
         Map<String, Object> content = (hotelObj instanceof Map) ? (Map<String, Object>) hotelObj : Map.of();
 
+        // Extract fallback hotel information from availability if static content failed or timed out
+        Map<String, Object> availHotel = null;
+        if (availabilityResponse != null) {
+            Object hotelsWrapperObj = availabilityResponse.get("hotels");
+            if (hotelsWrapperObj instanceof Map) {
+                Object hotelsListObj = ((Map<String, Object>) hotelsWrapperObj).get("hotels");
+                if (hotelsListObj instanceof List && !((List<?>) hotelsListObj).isEmpty()) {
+                    availHotel = (Map<String, Object>) ((List<?>) hotelsListObj).get(0);
+                }
+            }
+        }
+
         String name = extractContent(content.get("name"));
+        if ((name == null || name.isBlank()) && availHotel != null) {
+            name = String.valueOf(availHotel.getOrDefault("name", "Hotel " + hotelId));
+        }
+
+        String location = String.valueOf(content.getOrDefault("destinationName", ""));
+        if ((location == null || location.isBlank() || "null".equals(location)) && availHotel != null) {
+            location = String.valueOf(availHotel.getOrDefault("destinationName", ""));
+        }
+
+        double rating = toDouble(content.get("categoryCode"));
+        if (rating == 0.0 && availHotel != null) {
+            rating = toDouble(availHotel.get("categoryCode"));
+        }
+
         String description = content.get("description") != null
                 ? extractContent(((Map<String, Object>) content.get("description")))
                 : null;
@@ -391,9 +431,9 @@ public class HotelbedsHotelProviderClient implements HotelProviderClient {
 
         return HotelDetailDto.builder()
                 .hotelId(hotelId)
-                .name(name != null ? name : "")
-                .location(String.valueOf(content.getOrDefault("destinationName", "")))
-                .ratingScore(toDouble(content.get("categoryCode")))
+                .name(name != null ? name : "Hotel " + hotelId)
+                .location(location != null ? location : "")
+                .ratingScore(rating)
                 .reviewCount(0)
                 .amenities(amenities)
                 .roomTypes(roomTypes)
@@ -476,13 +516,15 @@ public class HotelbedsHotelProviderClient implements HotelProviderClient {
     }
 
     private String firstName(String fullName) {
+        if (fullName == null || fullName.isBlank()) return "Guest";
         String[] parts = fullName.trim().split("\\s+", 2);
         return parts[0];
     }
 
     private String lastName(String fullName) {
+        if (fullName == null || fullName.isBlank()) return "Guest";
         String[] parts = fullName.trim().split("\\s+", 2);
-        return parts.length > 1 ? parts[1] : "";
+        return parts.length > 1 ? parts[1] : parts[0];
     }
 
     private String cacheKey(String destination, LocalDate checkIn, LocalDate checkOut, int adults, int children) {

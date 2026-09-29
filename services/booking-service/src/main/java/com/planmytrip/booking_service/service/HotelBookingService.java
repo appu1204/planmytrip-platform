@@ -3,6 +3,8 @@ package com.planmytrip.booking_service.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.planmytrip.booking_service.dto.request.HotelBookingRequestDto;
+import com.planmytrip.booking_service.dto.response.BookingResponseDto;
 import com.planmytrip.booking_service.dto.response.HotelDetailDto;
 import com.planmytrip.booking_service.dto.response.HotelSearchPageResponse;
 
@@ -14,4 +16,6 @@ public interface HotelBookingService {
                                    int page, int size);
     
     HotelDetailDto getDetail(String hotelId, LocalDate checkIn, LocalDate checkOut);
+
+    BookingResponseDto book(HotelBookingRequestDto request);
 }

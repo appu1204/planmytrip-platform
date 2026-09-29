@@ -3,19 +3,25 @@ package com.planmytrip.booking_service.controller;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.planmytrip.booking_service.dto.request.HotelBookingRequestDto;
+import com.planmytrip.booking_service.dto.response.BookingResponseDto;
 import com.planmytrip.booking_service.dto.response.HotelDetailDto;
 import com.planmytrip.booking_service.dto.response.HotelSearchPageResponse;
 import com.planmytrip.booking_service.service.HotelBookingService;
@@ -81,4 +87,16 @@ public class HotelBookingController {
         return ResponseEntity.ok(hotelBookingService.getDetail(hotelId, checkIn, checkOut));
     }
         
+    /**
+     * POST /api/bookings/hotels or /api/bookings/hotels/book
+     * Creates a hotel booking with provider and processes payment.
+     *
+     * @param request Booking details including hotelId, roomTypeId/rateKey, dates, and guest info
+     * @return 201 Created with BookingResponseDto
+     */
+    @PostMapping({"", "/book"})
+    public ResponseEntity<BookingResponseDto> book(@Valid @RequestBody HotelBookingRequestDto request) {
+        BookingResponseDto response = hotelBookingService.book(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 }

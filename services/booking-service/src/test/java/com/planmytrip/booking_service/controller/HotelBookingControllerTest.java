@@ -1,15 +1,21 @@
 package com.planmytrip.booking_service.controller;
 
+import com.planmytrip.booking_service.dto.request.HotelBookingRequestDto;
+import com.planmytrip.booking_service.dto.response.BookingResponseDto;
 import com.planmytrip.booking_service.dto.response.HotelDetailDto;
 import com.planmytrip.booking_service.dto.response.HotelSearchPageResponse;
 import com.planmytrip.booking_service.dto.response.HotelSearchResultDto;
 import com.planmytrip.booking_service.dto.response.RoomTypeDto;
+import com.planmytrip.booking_service.enums.BookingModule;
+import com.planmytrip.booking_service.enums.BookingStatus;
 import com.planmytrip.booking_service.exception.HotelNotFoundException;
+import com.planmytrip.booking_service.exception.RoomUnavailableException;
 import com.planmytrip.booking_service.service.HotelBookingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -159,5 +166,97 @@ class HotelBookingControllerTest {
                         .param("checkOut", checkOut.toString()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("HOTEL_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("POST /api/bookings/hotels/book - 201 Created with valid request")
+    void bookHotel_success() throws Exception {
+        LocalDate checkIn = LocalDate.now().plusDays(10);
+        LocalDate checkOut = LocalDate.now().plusDays(13);
+
+        String json = """
+                {
+                    "userId": "USR123",
+                    "tripId": "TRIP-456",
+                    "hotelId": "178092",
+                    "roomTypeId": "RATE-XYZ",
+                    "checkIn": "%s",
+                    "checkOut": "%s",
+                    "adults": 2,
+                    "children": 0,
+                    "guestFullName": "John Doe",
+                    "guestEmail": "john.doe@example.com",
+                    "guestPhone": "+919876543210"
+                }
+                """.formatted(checkIn, checkOut);
+
+        BookingResponseDto response = BookingResponseDto.builder()
+                .bookingId("bkg-001")
+                .module(BookingModule.HOTEL)
+                .status(BookingStatus.CONFIRMED)
+                .referenceNo("PMT-HTL-1000001")
+                .itemName("Shervani Nehru Place - Deluxe Room")
+                .startDate(checkIn)
+                .endDate(checkOut)
+                .amount(new BigDecimal("7080.00"))
+                .currency("INR")
+                .build();
+
+        when(hotelBookingService.book(any(HotelBookingRequestDto.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/bookings/hotels/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.bookingId").value("bkg-001"))
+                .andExpect(jsonPath("$.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.referenceNo").value("PMT-HTL-1000001"))
+                .andExpect(jsonPath("$.amount").value(7080.00));
+    }
+
+    @Test
+    @DisplayName("POST /api/bookings/hotels - 400 Bad Request when required fields are missing")
+    void bookHotel_missingFields() throws Exception {
+        String invalidJson = """
+                {
+                    "userId": "USR123"
+                }
+                """;
+
+        mockMvc.perform(post("/api/bookings/hotels")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    @DisplayName("POST /api/bookings/hotels/book - 409 Conflict when room is unavailable")
+    void bookHotel_roomUnavailable() throws Exception {
+        LocalDate checkIn = LocalDate.now().plusDays(10);
+        LocalDate checkOut = LocalDate.now().plusDays(13);
+
+        String json = """
+                {
+                    "userId": "USR123",
+                    "hotelId": "178092",
+                    "roomTypeId": "UNAVAIL-ROOM",
+                    "checkIn": "%s",
+                    "checkOut": "%s",
+                    "adults": 1,
+                    "guestFullName": "Jane Doe",
+                    "guestEmail": "jane@example.com",
+                    "guestPhone": "+919876543210"
+                }
+                """.formatted(checkIn, checkOut);
+
+        when(hotelBookingService.book(any(HotelBookingRequestDto.class)))
+                .thenThrow(new RoomUnavailableException("UNAVAIL-ROOM"));
+
+        mockMvc.perform(post("/api/bookings/hotels/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("ROOM_UNAVAILABLE"));
     }
 }
