@@ -8,8 +8,10 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.planmytrip.booking_service.client.HotelProviderClient;
+import com.planmytrip.booking_service.dto.response.HotelDetailDto;
 import com.planmytrip.booking_service.dto.response.HotelSearchPageResponse;
 import com.planmytrip.booking_service.dto.response.HotelSearchResultDto;
+import com.planmytrip.booking_service.exception.HotelNotFoundException;
 import com.planmytrip.booking_service.service.HotelBookingService;
 
 import lombok.RequiredArgsConstructor;
@@ -75,5 +77,21 @@ public class HotelBookingServiceImpl implements HotelBookingService {
                 .last(page >= totalPages - 1 || totalPages == 0)
                 .build();
     }
+
+    @Override
+    public HotelDetailDto getDetail(String hotelId, LocalDate checkIn, LocalDate checkOut) {
+        if (checkIn == null || checkOut == null || !checkOut.isAfter(checkIn)) {
+            throw new IllegalArgumentException("checkOut must be after checkIn");
+        }
+        if (checkIn.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("checkIn date cannot be in the past");
+        }
+        HotelDetailDto detail = hotelProviderClient.getDetail(hotelId, checkIn, checkOut);
+        if (detail == null) {
+            throw new HotelNotFoundException(hotelId);
+        }
+        return detail; // unavailable rooms are included as-is, never filtered out (see PDF)
+    }
+
 
 }

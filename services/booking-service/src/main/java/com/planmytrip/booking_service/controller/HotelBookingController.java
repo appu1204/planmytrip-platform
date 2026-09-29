@@ -2,7 +2,6 @@ package com.planmytrip.booking_service.controller;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -12,10 +11,12 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.planmytrip.booking_service.dto.response.HotelDetailDto;
 import com.planmytrip.booking_service.dto.response.HotelSearchPageResponse;
 import com.planmytrip.booking_service.service.HotelBookingService;
 
@@ -61,5 +62,23 @@ public class HotelBookingController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * GET /api/bookings/hotels/{hotelId}
+     * This endpoint returns the detailed information for a specific hotel
+     * 
+     * @param hotelId     The ID of the hotel to retrieve details for
+     * @param checkIn     Check-in date (ISO-8601 YYYY-MM-DD)
+     * @param checkOut    Check-out date (ISO-8601 YYYY-MM-DD)
+     * @return Detailed information for the specified hotel with availability and pricing
+     */
+
+    @GetMapping("/{hotelId}")
+    public ResponseEntity<HotelDetailDto> getDetail(
+            @PathVariable String hotelId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut) {
+
+        return ResponseEntity.ok(hotelBookingService.getDetail(hotelId, checkIn, checkOut));
+    }
         
 }

@@ -1,7 +1,10 @@
 package com.planmytrip.booking_service.controller;
 
+import com.planmytrip.booking_service.dto.response.HotelDetailDto;
 import com.planmytrip.booking_service.dto.response.HotelSearchPageResponse;
 import com.planmytrip.booking_service.dto.response.HotelSearchResultDto;
+import com.planmytrip.booking_service.dto.response.RoomTypeDto;
+import com.planmytrip.booking_service.exception.HotelNotFoundException;
 import com.planmytrip.booking_service.service.HotelBookingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +18,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -99,5 +101,63 @@ class HotelBookingControllerTest {
         mockMvc.perform(get("/api/bookings/hotels/search")
                         .param("destination", "Delhi"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /api/bookings/hotels/{hotelId} - 200 OK with valid parameters")
+    void getDetail_success() throws Exception {
+        LocalDate checkIn = LocalDate.now().plusDays(3);
+        LocalDate checkOut = LocalDate.now().plusDays(6);
+
+        RoomTypeDto room = RoomTypeDto.builder()
+                .roomTypeId("RATE-9988")
+                .name("Deluxe Room")
+                .sleeps(2)
+                .pricePerNight(new BigDecimal("4200.00"))
+                .currency("INR")
+                .available(true)
+                .refundable(true)
+                .freeCancellationUntil("2026-10-10")
+                .build();
+
+        HotelDetailDto detail = HotelDetailDto.builder()
+                .hotelId("178092")
+                .name("Shervani Nehru Place")
+                .location("Delhi and NCR")
+                .ratingScore(4.0)
+                .reviewCount(50)
+                .amenities(List.of("WiFi", "Restaurant", "Room service"))
+                .roomTypes(List.of(room))
+                .cancellationPolicy("Free cancellation up to 48 hours before check-in")
+                .build();
+
+        when(hotelBookingService.getDetail(eq("178092"), eq(checkIn), eq(checkOut)))
+                .thenReturn(detail);
+
+        mockMvc.perform(get("/api/bookings/hotels/178092")
+                        .param("checkIn", checkIn.toString())
+                        .param("checkOut", checkOut.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hotelId").value("178092"))
+                .andExpect(jsonPath("$.name").value("Shervani Nehru Place"))
+                .andExpect(jsonPath("$.roomTypes[0].roomTypeId").value("RATE-9988"))
+                .andExpect(jsonPath("$.roomTypes[0].name").value("Deluxe Room"))
+                .andExpect(jsonPath("$.roomTypes[0].pricePerNight").value(4200.00));
+    }
+
+    @Test
+    @DisplayName("GET /api/bookings/hotels/{hotelId} - 404 Not Found when hotel does not exist")
+    void getDetail_notFound() throws Exception {
+        LocalDate checkIn = LocalDate.now().plusDays(3);
+        LocalDate checkOut = LocalDate.now().plusDays(6);
+
+        when(hotelBookingService.getDetail(eq("99999999"), eq(checkIn), eq(checkOut)))
+                .thenThrow(new HotelNotFoundException("99999999"));
+
+        mockMvc.perform(get("/api/bookings/hotels/99999999")
+                        .param("checkIn", checkIn.toString())
+                        .param("checkOut", checkOut.toString()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("HOTEL_NOT_FOUND"));
     }
 }
