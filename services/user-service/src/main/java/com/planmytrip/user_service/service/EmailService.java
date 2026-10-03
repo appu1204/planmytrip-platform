@@ -34,10 +34,13 @@ public class EmailService {
 
     @Async
     public void sendOtpEmail(String email, String name, String otp) {
+        log.info("==================================================");
+        log.info(">>>>> [AUTH OTP] Target: {} | Code: [{}] <<<<<", email, otp);
+        log.info("==================================================");
         try {
             JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
             if (mailSender == null) {
-                log.warn("JavaMailSender not configured; skipping OTP email to {}", email);
+                log.warn("JavaMailSender not configured; OTP for {} is [{}]", email, otp);
                 return;
             }
 
@@ -55,13 +58,17 @@ public class EmailService {
 
             mailSender.send(message);
             log.info("OTP email sent to {}", email);
-        } catch (MessagingException | IOException e) {
-            log.error("Failed to send OTP email to {}", email, e);
+        } catch (Exception e) {
+            log.warn("SMTP email delivery failed for {} (reason: {}). Test OTP is: [{}]", email, e.getMessage(), otp);
         }
     }
 
     @Async
     public void sendPlainEmail(String to, String subject, String body) {
+        log.info("==================================================");
+        log.info(">>>>> [EMAIL] To: {} | Subject: {} <<<<<", to, subject);
+        log.info(">>>>> Body: {} <<<<<", body);
+        log.info("==================================================");
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
         if (mailSender == null) {
             log.warn("JavaMailSender not configured; skipping email to {} (subject={})", to, subject);
@@ -77,7 +84,7 @@ public class EmailService {
             mailSender.send(message);
             log.info("Email sent to {} (subject={})", to, subject);
         } catch (Exception e) {
-            log.error("Failed to send email to {} (subject={})", to, subject, e);
+            log.warn("Failed to send email to {} (subject={}): {}", to, subject, e.getMessage());
         }
     }
 
