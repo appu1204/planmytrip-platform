@@ -4,7 +4,7 @@ A scalable AI-powered travel planning platform built using a microservices archi
 
 ## Tech Stack
 
-- Java 17
+- Java 21
 - Spring Boot
 - Spring Cloud
 - MySQL
@@ -36,4 +36,15 @@ planmytrip-platform/
 
 ## Current Status
 
+🚧 Platform Foundation Setup completed
+
+🌐 Gateway Service | Completed | API routing configured and tested
+
+👤 User Service | Completed | Backend implemented and API tested
+
+🌍 Trip Service | Completed | Backend implemented and API tested
+
+🤖 AI Itinerary Service | Completed | Backend implemented and API tested
+
 🎫 Working on Booking Service
+

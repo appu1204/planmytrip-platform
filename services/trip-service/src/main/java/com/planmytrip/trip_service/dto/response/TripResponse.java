@@ -1,0 +1,53 @@
+package com.planmytrip.trip_service.dto.response;
+
+import com.planmytrip.trip_service.enums.TripStatus;
+import com.planmytrip.trip_service.enums.TripType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TripResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private UUID id;
+    private Long userId;
+    private String tripName;
+    private String destination;
+    private TripType tripType;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Integer adults;
+    private Integer children;
+    private BigDecimal budget;
+    private String currency;
+    private TripStatus status;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("name")
+    public String getName() {
+        return tripName;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("checkIn")
+    public LocalDate getCheckIn() {
+        return startDate;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("checkOut")
+    public LocalDate getCheckOut() {
+        return endDate;
+    }
+}

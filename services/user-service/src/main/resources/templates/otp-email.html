@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Your Login</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f2f5;font-family:Arial,Helvetica,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background-color:#f0f2f5;padding:30px 10px;">
+    <tr>
+      <td align="center">
+
+        <!-- MAIN CARD -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0"
+               style="max-width:600px;background:#ffffff;border-radius:16px;
+                      overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10);">
+
+          <!-- ═══════════ HEADER IMAGE ═══════════ -->
+          <tr>
+            <td style="padding:0;margin:0;line-height:0;">
+              <img src="cid:header-image"
+                   alt="PlanMyTrip — Travel the world with ease"
+                   width="600" height="220"
+                   style="display:block;width:600px;height:220px;"/>
+            </td>
+          </tr>
+
+          <!-- ═══════════ BODY ═══════════ -->
+          <tr>
+            <td style="padding:40px 48px 32px;">
+
+              <h2 style="margin:0 0 10px;font-size:26px;font-weight:800;color:#111827;">
+                Hello {{name}},
+              </h2>
+              <p style="margin:0 0 32px;font-size:15px;color:#6b7280;line-height:1.6;">
+                Use the following OTP to complete your login.
+              </p>
+
+              <!-- OTP Box -->
+              <div style="background:#f0f4ff;border-radius:14px;padding:28px 16px;
+                          text-align:center;margin-bottom:28px;">
+                {{otp_digits}}
+              </div>
+
+              <!-- Validity -->
+              <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td style="vertical-align:middle;padding-right:12px;">
+                    <svg width="28" height="28" viewBox="0 0 28 28"
+                         xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14 2 L24 6 L24 14 C24 20 14 26 14 26
+                               C14 26 4 20 4 14 L4 6 Z"
+                            fill="none" stroke="#1a3fcc" stroke-width="2"
+                            stroke-linejoin="round"/>
+                      <path d="M9 14 L12 17 L19 11"
+                            fill="none" stroke="#1a3fcc" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </td>
+                  <td style="vertical-align:middle;font-size:14px;color:#374151;">
+                    This OTP is valid for
+                    <strong style="color:#1a3fcc;">{{expiry}} minutes.</strong>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%"
+                     style="background:#fff0f0;border-radius:10px;margin-bottom:32px;">
+                <tr>
+                  <td style="padding:14px 18px;vertical-align:middle;">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="vertical-align:middle;padding-right:12px;">
+                          <svg width="26" height="26" viewBox="0 0 26 26"
+                               xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 1 L23 5 L23 13 C23 19 13 25 13 25
+                                     C13 25 3 19 3 13 L3 5 Z"
+                                  fill="#cc0000" opacity="0.15"/>
+                            <path d="M13 1 L23 5 L23 13 C23 19 13 25 13 25
+                                     C13 25 3 19 3 13 L3 5 Z"
+                                  fill="none" stroke="#cc0000" stroke-width="2"
+                                  stroke-linejoin="round"/>
+                            <line x1="13" y1="9" x2="13" y2="15"
+                                  stroke="#cc0000" stroke-width="2.2"
+                                  stroke-linecap="round"/>
+                            <circle cx="13" cy="18.5" r="1.2" fill="#cc0000"/>
+                          </svg>
+                        </td>
+                        <td style="vertical-align:middle;color:#cc0000;
+                                   font-weight:700;font-size:14px;">
+                          Never share your OTP with anyone.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 24px;"/>
+
+              <p style="margin:0 0 4px;font-size:14px;color:#6b7280;">Regards,</p>
+              <p style="margin:0;font-size:15px;font-weight:700;color:#1a3fcc;">
+                PlanMyTrip Team
+              </p>
+            </td>
+          </tr>
+
+          <!-- ═══════════ FOOTER ═══════════ -->
+          <tr>
+            <td style="background:#f8f9ff;padding:28px 48px;text-align:center;
+                       border-top:1px solid #e5e7eb;">
+
+              <table cellpadding="0" cellspacing="0" border="0"
+                     style="margin:0 auto 16px;">
+                <tr>
+                  <td style="padding:0 8px;">
+                    <a href="#" style="display:inline-block;width:36px;height:36px;
+                       background:#1877f2;border-radius:50%;text-align:center;
+                       line-height:36px;color:white;font-size:16px;font-weight:bold;
+                       text-decoration:none;">f</a>
+                  </td>
+                  <td style="padding:0 8px;">
+                    <a href="#" style="display:inline-block;width:36px;height:36px;
+                       background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+                       border-radius:50%;text-align:center;line-height:36px;
+                       color:white;font-size:18px;text-decoration:none;">&#9679;</a>
+                  </td>
+                  <td style="padding:0 8px;">
+                    <a href="#" style="display:inline-block;width:36px;height:36px;
+                       background:#1da1f2;border-radius:50%;text-align:center;
+                       line-height:36px;color:white;font-size:14px;font-weight:bold;
+                       text-decoration:none;">𝕏</a>
+                  </td>
+                  <td style="padding:0 8px;">
+                    <a href="#" style="display:inline-block;width:36px;height:36px;
+                       background:#0077b5;border-radius:50%;text-align:center;
+                       line-height:36px;color:white;font-size:13px;font-weight:bold;
+                       text-decoration:none;">in</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">
+                &copy; 2026 PlanMyTrip. All rights reserved.
+              </p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">
+                If you didn't request this OTP, please ignore this email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
