@@ -37,7 +37,7 @@ public class TripPreference {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "tripId", nullable = false)
+    @Column(name = "trip_id", nullable = false)
     private UUID tripId;
 
     @Enumerated(EnumType.STRING)
@@ -45,7 +45,7 @@ public class TripPreference {
     private TripPreferenceType preference;
 
     @CreationTimestamp
-    @Column(name = "createdAt", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
 }

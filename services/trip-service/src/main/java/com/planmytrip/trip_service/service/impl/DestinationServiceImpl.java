@@ -25,6 +25,10 @@ public class DestinationServiceImpl implements DestinationService {
     private final DestinationRepository destinationRepository;
 
     @Override
+    @org.springframework.cache.annotation.Cacheable(
+            value = com.planmytrip.trip_service.config.RedisConfig.CACHE_POPULAR_DESTINATIONS,
+            key = "(#persona != null ? #persona.name() : 'ALL') + ':' + (#limit != null && #limit > 0 ? (#limit > 20 ? 20 : #limit) : 5)"
+    )
     public List<DestinationResponse> getPopularDestinations(TripType persona, Integer limit) {
         int safeLimit = normaliseLimit(limit);
         PageRequest page = PageRequest.of(0, safeLimit);

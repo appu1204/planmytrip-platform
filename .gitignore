@@ -20,9 +20,11 @@ build/
 
 # Environment
 .env
+*.env
+.env.*
+!.env.example
 
 # OS Files
 .DS_Store
 Thumbs.db
-services/ai-itinerary-service/
-services/gateway-service/src/main/resources/application-dev.properties
+

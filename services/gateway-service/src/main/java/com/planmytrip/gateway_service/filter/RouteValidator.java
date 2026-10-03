@@ -28,9 +28,15 @@ public class RouteValidator {
 
             // Public "browse without login" endpoints
             "/api/trip/popular",
+            "/trips/popular",
 
             // Gateway/actuator health checks
-            "/actuator/health"
+            "/actuator/health",
+            "/actuator/info",
+
+            // Swagger / OpenAPI documentation
+            "/v3/api-docs",
+            "/swagger-ui"
     );
 
     public Predicate<ServerHttpRequest> isSecured =

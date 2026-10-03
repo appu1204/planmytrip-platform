@@ -30,6 +30,7 @@ public interface TripService {
      * Fetch a single trip by id. 404 via TripNotFoundException if missing.
      */
     TripResponse getTripById(UUID tripId);
+    TripResponse getTripById(UUID tripId, Long userId);
 
     /**
      * Backlog story: "Let user edit trip details".
@@ -37,6 +38,7 @@ public interface TripService {
      * Blocked once the trip is BOOKED or COMPLETED.
      */
     TripResponse updateTrip(UUID tripId, UpdateTripRequest request);
+    TripResponse updateTrip(UUID tripId, UpdateTripRequest request, Long userId);
 
     /**
      * Backlog story: "Let user delete a trip".
@@ -44,6 +46,7 @@ public interface TripService {
      * Preferences for the trip cascade-delete at the DB level (FK ON DELETE CASCADE).
      */
     void deleteTrip(UUID tripId);
+    void deleteTrip(UUID tripId, Long userId);
 
     /**
      * Backlog story: "Show trip status clearly".
@@ -51,5 +54,6 @@ public interface TripService {
      * progression — see TripStatus.canTransitionTo for the exact rule.
      */
     TripResponse updateTripStatus(UUID tripId, TripStatus newStatus);
+    TripResponse updateTripStatus(UUID tripId, TripStatus newStatus, Long userId);
 
 }

@@ -53,7 +53,7 @@ public class TripController {
             @RequestParam(required = false) TripStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Long effectiveUserId = (userId != null) ? userId : headerUserId;
+        Long effectiveUserId = (headerUserId != null) ? headerUserId : userId;
         if (effectiveUserId == null) {
             throw new InvalidTripRequestException("userId is required");
         }
@@ -62,27 +62,30 @@ public class TripController {
 
     @GetMapping("/{tripId}")
     @Operation(summary = "Get a single trip by id")
-    public ResponseEntity<TripResponse> getTrip(@PathVariable UUID tripId) {
-        return ResponseEntity.ok(tripService.getTripById(tripId));
+    public ResponseEntity<TripResponse> getTrip(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @PathVariable UUID tripId) {
+        return ResponseEntity.ok(tripService.getTripById(tripId, headerUserId));
     }
 
     @PatchMapping("/{tripId}")
     @Operation(summary = "Edit trip details",
             description = "Partial update — only send the fields you want to change. " +
                     "Blocked once the trip is BOOKED or COMPLETED.")
-
     public ResponseEntity<TripResponse> updateTrip(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
             @PathVariable UUID tripId,
             @Valid @RequestBody UpdateTripRequest request) {
-
-        return ResponseEntity.ok(tripService.updateTrip(tripId, request));
-            }
+        return ResponseEntity.ok(tripService.updateTrip(tripId, request, headerUserId));
+    }
 
     @DeleteMapping("/{tripId}")
     @Operation(summary = "Delete a trip",
             description = "Blocked once the trip is BOOKED or COMPLETED.")
-    public ResponseEntity<Void> deleteTrip(@PathVariable UUID tripId) {
-        tripService.deleteTrip(tripId);
+    public ResponseEntity<Void> deleteTrip(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @PathVariable UUID tripId) {
+        tripService.deleteTrip(tripId, headerUserId);
         return ResponseEntity.noContent().build();
     }
 
@@ -91,9 +94,10 @@ public class TripController {
             description = "Forward-only, one step at a time: DRAFT -> PLAN_READY -> BOOKED -> COMPLETED. " +
                     "Skipping a step or going backwards is rejected.")
     public ResponseEntity<TripResponse> updateTripStatus(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
             @PathVariable UUID tripId,
             @Valid @RequestBody UpdateTripStatusRequest request) {
-        return ResponseEntity.ok(tripService.updateTripStatus(tripId, request.getStatus()));
+        return ResponseEntity.ok(tripService.updateTripStatus(tripId, request.getStatus(), headerUserId));
     }
 
 }

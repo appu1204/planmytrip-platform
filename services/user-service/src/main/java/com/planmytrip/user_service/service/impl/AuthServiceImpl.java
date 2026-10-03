@@ -44,6 +44,12 @@ public class AuthServiceImpl implements AuthService {
     @Value("${app.token.otp-expiry-minutes}")
     private int otpExpiryMinutes;
 
+    @Value("${app.security.max-failed-attempts:5}")
+    private int maxFailedAttempts;
+
+    @Value("${app.security.lock-duration-minutes:30}")
+    private int lockDurationMinutes;
+
     @Value("${app.base-url}")
     private String baseUrl;
 
@@ -52,6 +58,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${app.token.email-verification-expiry-hours}")
     private int emailVerificationExpiryHours;
+
+    private static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();
 
     @Override
     @Transactional
@@ -82,8 +90,35 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
+        if (user.isAccountLocked()) {
+            throw new AccountLockedException("Account is temporarily locked due to multiple failed login attempts. Try again later.");
+        }
+
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new BadRequestException("Account is deactivated. Please contact support.");
+        }
+
+        if (Boolean.FALSE.equals(user.getIsVerified())) {
+            throw new BadRequestException("Account email is not verified. Please verify your email before logging in.");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            int attempts = (user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0) + 1;
+            user.setFailedLoginAttempts(attempts);
+            if (attempts >= maxFailedAttempts) {
+                user.setLockUntil(LocalDateTime.now().plusMinutes(lockDurationMinutes));
+                userRepository.save(user);
+                throw new AccountLockedException("Account locked due to " + attempts + " failed attempts. Try again in " + lockDurationMinutes + " minutes.");
+            }
+            userRepository.save(user);
             throw new BadRequestException("Invalid credentials");
+        }
+
+        // Reset failed login attempts and record last login
+        user.setFailedLoginAttempts(0);
+        user.setLockUntil(null);
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
 
         loginOtpTokenRepository.deleteAllByUserId(user.getId());
 
@@ -220,7 +255,7 @@ public class AuthServiceImpl implements AuthService {
     // =====================================================
 
     private String generateOtp() {
-        return String.valueOf(100000 + new Random().nextInt(900000));
+        return String.valueOf(100000 + SECURE_RANDOM.nextInt(900000));
     }
 
     private void saveOtp(User user, String otp) {

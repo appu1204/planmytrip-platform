@@ -28,6 +28,7 @@ public class ItineraryPlanData implements Serializable {
     private BudgetBreakdown budgetBreakdown;
     private List<String> preferencesUsed;
     private String aiSummary;
+    private String notes;
 
     @Data
     @NoArgsConstructor

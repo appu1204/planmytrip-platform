@@ -29,7 +29,7 @@ import lombok.Setter;
  */
 
 @Entity
-@Table (name = "Destinations")
+@Table(name = "destinations")
 @Data
 @Getter
 @Setter
@@ -40,20 +40,19 @@ public class Destination {
 
     @Id
     @GeneratedValue
-    @Column (name = "user_id", updatable = false, nullable = false)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column (name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column (name = "country", nullable = false, length = 100)
+    @Column(name = "country", nullable = false, length = 100)
     private String country;
 
     /**
-     * Plain URL string on purpose — Storage Can be Cloudinary or s3 based on the need.
+     * Plain URL string on purpose — Storage can be Cloudinary or S3 based on need.
      */
-    
-    @Column (name = "image_url", nullable = false, length = 100)
+    @Column(name = "image_url", nullable = false, length = 500)
     private String imageUrl;
 
 

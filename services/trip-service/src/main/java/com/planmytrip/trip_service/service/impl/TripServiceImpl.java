@@ -33,6 +33,7 @@ public class TripServiceImpl implements TripService {
 
     private final TripRepository tripRepository;
     private final TripMapper tripMapper;
+    private final com.planmytrip.trip_service.repository.TripPreferenceRepository tripPreferenceRepository;
 
     @Override
     @Transactional
@@ -64,17 +65,38 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public TripResponse getTripById(UUID tripId) {
+        return getTripById(tripId, null);
+    }
+
+    @Override
+    @org.springframework.cache.annotation.Cacheable(
+            value = com.planmytrip.trip_service.config.RedisConfig.CACHE_TRIPS,
+            key = "#tripId.toString() + ':' + (#userId != null ? #userId : '0')"
+    )
+    public TripResponse getTripById(UUID tripId, Long userId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new TripNotFoundException(tripId));
+        assertUserOwnsTrip(trip, userId);
         return tripMapper.toResponse(trip);
     }
 
     @Override
     @Transactional
     public TripResponse updateTrip(UUID tripId, UpdateTripRequest request) {
+        return updateTrip(tripId, request, null);
+    }
+
+    @Override
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(
+            value = com.planmytrip.trip_service.config.RedisConfig.CACHE_TRIPS,
+            key = "#tripId.toString() + ':' + (#userId != null ? #userId : '0')"
+    )
+    public TripResponse updateTrip(UUID tripId, UpdateTripRequest request, Long userId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new TripNotFoundException(tripId));
 
+        assertUserOwnsTrip(trip, userId);
         assertTripIsEditable(trip);
 
         tripMapper.applyUpdate(trip, request);
@@ -90,10 +112,22 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public void deleteTrip(UUID tripId) {
+        deleteTrip(tripId, null);
+    }
+
+    @Override
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(
+            value = com.planmytrip.trip_service.config.RedisConfig.CACHE_TRIPS,
+            key = "#tripId.toString() + ':' + (#userId != null ? #userId : '0')"
+    )
+    public void deleteTrip(UUID tripId, Long userId) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(()-> new TripNotFoundException(tripId));
+                .orElseThrow(() -> new TripNotFoundException(tripId));
+        assertUserOwnsTrip(trip, userId);
         assertTripIsMutable(trip, "delete");
         
+        tripPreferenceRepository.deleteAllByTripId(tripId);
         tripRepository.delete(trip);
         log.info("deleted trip id={}", tripId);
     }
@@ -101,8 +135,20 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public TripResponse updateTripStatus(UUID tripId, TripStatus newStatus) {
+        return updateTripStatus(tripId, newStatus, null);
+    }
+
+    @Override
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(
+            value = com.planmytrip.trip_service.config.RedisConfig.CACHE_TRIPS,
+            key = "#tripId.toString() + ':' + (#userId != null ? #userId : '0')"
+    )
+    public TripResponse updateTripStatus(UUID tripId, TripStatus newStatus, Long userId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new TripNotFoundException(tripId));
+
+        assertUserOwnsTrip(trip, userId);
 
         TripStatus current = trip.getStatus();
         if (!current.canTransitionTo(newStatus)) {
@@ -120,6 +166,17 @@ public class TripServiceImpl implements TripService {
         log.info("Trip id={} status changed {} -> {}", saved.getId(), current, newStatus);
 
         return tripMapper.toResponse(saved);
+    }
+
+    private void assertUserOwnsTrip(Trip trip, Long userId) {
+        if (userId == null) {
+            throw new com.planmytrip.trip_service.exception.UnauthorizedException(
+                    "User authentication is required");
+        }
+        if (!userId.equals(trip.getUserId())) {
+            throw new com.planmytrip.trip_service.exception.UnauthorizedException(
+                    "You do not have permission to access or modify this trip");
+        }
     }
 
     private void assertTripIsMutable(Trip trip, String action) {

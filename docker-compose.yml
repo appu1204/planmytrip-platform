@@ -1,31 +1,133 @@
 services:
 
   gateway-service:
+    build:
+      context: ./services/gateway-service
+      dockerfile: Dockerfile
     image: planmytrip-gateway:1.0
     container_name: planmytrip-gateway
     ports:
       - "8080:8080"
-    volumes:
-      - ./services/gateway-service/src/main/resources/application-dev.properties:/app/config/application-dev.properties:ro
+    environment:
+      - USER_SERVICE_URL=http://user-service:8081
+      - TRIP_SERVICE_URL=http://trip-service:8082
+      - AI_ITINERARY_SERVICE_URL=http://ai-itinerary-service:8083
+      - JWT_SECRET=${JWT_SECRET:-dev-planmytrip-secret-key-min-32-chars-ok-for-local}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     depends_on:
       - user-service
       - trip-service
       - ai-itinerary-service
+    restart: unless-stopped
 
   user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
     image: planmytrip-user:1.0
     container_name: planmytrip-user
-    ports:
-      - "8081:8081"
+    expose:
+      - "8081"
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST:-mysql}
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=planmytrip_user_db
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:-dev-planmytrip-secret-key-min-32-chars-ok-for-local}
+      - MAIL_USERNAME=${MAIL_USERNAME:-noreply.planmytrip@gmail.com}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
 
   trip-service:
+    build:
+      context: ./services/trip-service
+      dockerfile: Dockerfile
     image: planmytrip-trip:1.0
     container_name: planmytrip-trip
-    ports:
-      - "8082:8082"
+    expose:
+      - "8082"
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST:-mysql}
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=planmytrip_trip_db
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-root}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redispassword}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   ai-itinerary-service:
+    build:
+      context: ./services/ai-itinerary-service
+      dockerfile: Dockerfile
     image: planmytrip-ai-itinerary:1.0
     container_name: planmytrip-ai-itinerary
+    expose:
+      - "8083"
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST:-mysql}
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=planmytrip_itinerary_db
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-root}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-1.5-flash}
+      - JWT_SECRET=${JWT_SECRET:-dev-planmytrip-secret-key-min-32-chars-ok-for-local}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: planmytrip-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-root}
     ports:
-      - "8083:8083"
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: planmytrip-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispassword}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  default:
+    name: planmytrip-net

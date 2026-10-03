@@ -20,11 +20,38 @@ class RouteValidatorTest {
     }
 
     @Test
-    void shouldRecognizeProtectedEndpointsAsSecured() {
+    void shouldRecognizePopularDestinationsAsPublicEndpoint() {
         MockServerHttpRequest request = MockServerHttpRequest
-                .get("/api/user/profile")
+                .get("/api/trip/popular")
                 .build();
 
-        assertTrue(validator.isSecured.test(request), "Profile should be a secured endpoint");
+        assertFalse(validator.isSecured.test(request), "Popular destinations should be open without auth");
+    }
+
+    @Test
+    void shouldRecognizeActuatorHealthAsPublicEndpoint() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .get("/actuator/health")
+                .build();
+
+        assertFalse(validator.isSecured.test(request), "Actuator health should be open for load balancers");
+    }
+
+    @Test
+    void shouldRecognizeTripModificationAsSecuredEndpoint() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .patch("/api/trip/trips/123e4567-e89b-12d3-a456-426614174000")
+                .build();
+
+        assertTrue(validator.isSecured.test(request), "Trip details and mutations must be secured");
+    }
+
+    @Test
+    void shouldRecognizeItineraryGenerationAsSecuredEndpoint() {
+        MockServerHttpRequest request = MockServerHttpRequest
+                .post("/api/v1/ai-itinerary/generate")
+                .build();
+
+        assertTrue(validator.isSecured.test(request), "AI itinerary generation must be secured");
     }
 }

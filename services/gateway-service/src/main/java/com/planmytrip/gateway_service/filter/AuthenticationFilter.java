@@ -35,7 +35,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
 
         if (!routeValidator.isSecured.test(request)) {
-            return chain.filter(exchange);
+            // Strip any external X-User-Id on open endpoints to prevent header spoofing
+            ServerHttpRequest sanitized = request.mutate()
+                    .headers(headers -> headers.remove("X-User-Id"))
+                    .build();
+            return chain.filter(exchange.mutate().request(sanitized).build());
         }
 
         String authHeader = request.getHeaders().getFirst("Authorization");

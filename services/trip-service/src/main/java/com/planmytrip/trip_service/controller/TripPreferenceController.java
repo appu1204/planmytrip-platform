@@ -25,14 +25,17 @@ public class TripPreferenceController {
             description = "Replaces the full preference set for this trip. " +
                     "Blocked once the trip is BOOKED or COMPLETED.")
     public ResponseEntity<TripPreferencesResponse> setPreferences(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
             @PathVariable UUID tripId,
             @Valid @RequestBody UpdateTripPreferencesRequest request) {
-        return ResponseEntity.ok(tripPreferenceService.setPreferences(tripId, request));
+        return ResponseEntity.ok(tripPreferenceService.setPreferences(tripId, request, headerUserId));
     }
 
     @GetMapping
     @Operation(summary = "Get trip preferences")
-    public ResponseEntity<TripPreferencesResponse> getPreferences(@PathVariable UUID tripId) {
-        return ResponseEntity.ok(tripPreferenceService.getPreferences(tripId));
+    public ResponseEntity<TripPreferencesResponse> getPreferences(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @PathVariable UUID tripId) {
+        return ResponseEntity.ok(tripPreferenceService.getPreferences(tripId, headerUserId));
     }
 }

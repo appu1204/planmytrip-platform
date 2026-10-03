@@ -118,7 +118,9 @@ public class ItineraryServiceImpl implements ItineraryService {
 
     @Transactional(readOnly = true)
     public List<ItinerarySummaryResponse> getHistoryForTrip(UUID tripId) {
+        Long userId = currentUserProvider.getUserId();
         return itineraryRepository.findByTripIdOrderByVersionDesc(tripId).stream()
+                .filter(i -> userId.equals(i.getUserId()))
                 .map(ItinerarySummaryResponse::fromEntity)
                 .toList();
     }
@@ -133,6 +135,11 @@ public class ItineraryServiceImpl implements ItineraryService {
 
         if (itinerary == null) {
             throw new ResourceNotFoundException("No itinerary found for trip " + tripId);
+        }
+
+        if (!userId.equals(itinerary.getUserId())) {
+            throw new com.planmytrip.ai_itinerary_service.exception.UnauthorizedException(
+                    "You do not have access to this itinerary");
         }
 
         return ItineraryResponse.fromEntity(itinerary);
@@ -350,15 +357,38 @@ public class ItineraryServiceImpl implements ItineraryService {
     @Override
     @Transactional(readOnly = true)
     public BudgetResponse getBudgetForTrip(UUID tripId) {
+        Long userId = currentUserProvider.getUserId();
         Itinerary itinerary = itineraryRepository.findByTripIdAndActiveTrue(tripId)
                 .or(() -> itineraryRepository.findTopByTripIdOrderByVersionDesc(tripId))
                 .orElseThrow(() -> new ResourceNotFoundException("No itinerary found for trip " + tripId));
+
+        if (userId != null && !userId.equals(itinerary.getUserId())) {
+            throw new com.planmytrip.ai_itinerary_service.exception.UnauthorizedException(
+                    "You do not have access to this itinerary");
+        }
+
         return BudgetResponse.fromEntity(itinerary);
     }
 
     @Override
     @Transactional
     public java.util.Map<String, Object> saveNotes(UUID tripId, String notes) {
+        Long userId = currentUserProvider.getUserId();
+        Itinerary itinerary = itineraryRepository.findByTripIdAndActiveTrue(tripId)
+                .or(() -> itineraryRepository.findTopByTripIdOrderByVersionDesc(tripId))
+                .orElseThrow(() -> new ResourceNotFoundException("No itinerary found for trip " + tripId));
+
+        if (userId != null && !userId.equals(itinerary.getUserId())) {
+            throw new com.planmytrip.ai_itinerary_service.exception.UnauthorizedException(
+                    "You do not have access to this itinerary");
+        }
+
+        if (itinerary.getPlanData() == null) {
+            itinerary.setPlanData(new ItineraryPlanData());
+        }
+        itinerary.getPlanData().setNotes(notes);
+        itineraryRepository.save(itinerary);
+        log.info("Saved notes for trip {}", tripId);
         return java.util.Map.of("tripId", tripId.toString(), "notes", notes != null ? notes : "", "saved", true);
     }
 

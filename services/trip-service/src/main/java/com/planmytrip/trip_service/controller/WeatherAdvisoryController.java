@@ -20,16 +20,19 @@ import java.util.UUID;
 public class WeatherAdvisoryController {
 
     private final TripService tripService;
+    private final com.planmytrip.trip_service.service.WeatherAdvisoryService weatherAdvisoryService;
 
     @GetMapping("/{tripId}/weather-advisory")
     @Operation(summary = "Get weather safety advisory for a trip",
             description = "Evaluates destination atmospheric conditions and natural hazard risks (heavy rain, wind gusts, landslides) for the trip")
-    public ResponseEntity<WeatherAdvisoryResponse> getTripWeatherAdvisory(@PathVariable UUID tripId) {
-        TripResponse trip = tripService.getTripById(tripId);
+    public ResponseEntity<WeatherAdvisoryResponse> getTripWeatherAdvisory(
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+            @PathVariable UUID tripId) {
+        TripResponse trip = tripService.getTripById(tripId, headerUserId);
         String destination = (trip.getDestination() != null && !trip.getDestination().isBlank())
                 ? trip.getDestination()
                 : "your destination";
-        return ResponseEntity.ok(buildAdvisory(destination));
+        return ResponseEntity.ok(weatherAdvisoryService.getAdvisory(destination));
     }
 
     @GetMapping("/weather/check")
@@ -37,36 +40,6 @@ public class WeatherAdvisoryController {
             description = "On-demand natural hazard clearance check for immediate or upcoming tours")
     public ResponseEntity<WeatherAdvisoryResponse> checkWeatherSafety(
             @RequestParam(defaultValue = "your destination") String destination) {
-        return ResponseEntity.ok(buildAdvisory(destination));
-    }
-
-    private WeatherAdvisoryResponse buildAdvisory(String destination) {
-        String norm = destination.toLowerCase().trim();
-        boolean isHilly = norm.contains("munnar") || norm.contains("wayanad") || norm.contains("manali")
-                || norm.contains("shimla") || norm.contains("ooty") || norm.contains("coorg")
-                || norm.contains("kodaikanal") || norm.contains("rishikesh") || norm.contains("darjeeling");
-
-        List<String> hazards = new ArrayList<>();
-        // Default favorable green-light status for baseline queries
-        String status = "SAFE";
-        String title = "Weather Safety Clearance: Favorable & Safe to Travel";
-        String verdict = "All environmental indicators for " + destination
-                + " are within safe, calm operating thresholds. Wind speeds and precipitation are favorable for sightseeing and transit.";
-        String recommendation = "Green light for your journey! Regional transit routes and outdoor attractions are operating smoothly.";
-        int score = 95;
-
-        return WeatherAdvisoryResponse.builder()
-                .destination(destination)
-                .status(status)
-                .title(title)
-                .professionalVerdict(verdict)
-                .recommendation(recommendation)
-                .safetyScore(score)
-                .temperature(27.5)
-                .windSpeedKmh(12.0)
-                .precipitationMm(2.0)
-                .isHillyTerrain(isHilly)
-                .hazardReasons(hazards)
-                .build();
+        return ResponseEntity.ok(weatherAdvisoryService.getAdvisory(destination));
     }
 }

@@ -27,7 +27,7 @@ public class DestinationController {
 
     private final DestinationService destinationService;
 
-    @GetMapping("/popular")
+    @GetMapping({"/popular", "/destinations/popular"})
     @Operation(summary = "Get popular destinations",
             description = "Powers the home page 'Popular Destinations' strip. " +
                     "Optionally filter by persona (SOLO, COUPLE, FRIENDS, FAMILY).")

@@ -34,7 +34,14 @@ public class TripPreferenceServiceImpl implements TripPreferenceService {
     @Override
     @Transactional
     public TripPreferencesResponse setPreferences(UUID tripId, UpdateTripPreferencesRequest request) {
+        return setPreferences(tripId, request, null);
+    }
+
+    @Override
+    @Transactional
+    public TripPreferencesResponse setPreferences(UUID tripId, UpdateTripPreferencesRequest request, Long userId) {
         Trip trip = getTripOrThrow(tripId);
+        assertUserOwnsTrip(trip, userId);
         assertTripIsEditable(trip);
 
         // De-duplicate while preserving the order the user picked them in.
@@ -58,7 +65,13 @@ public class TripPreferenceServiceImpl implements TripPreferenceService {
 
     @Override
     public TripPreferencesResponse getPreferences(UUID tripId) {
-        getTripOrThrow(tripId); // 404 cleanly if the trip doesn't exist
+        return getPreferences(tripId, null);
+    }
+
+    @Override
+    public TripPreferencesResponse getPreferences(UUID tripId, Long userId) {
+        Trip trip = getTripOrThrow(tripId); // 404 cleanly if the trip doesn't exist
+        assertUserOwnsTrip(trip, userId);
 
         List<TripPreferenceType> preferences = tripPreferenceRepository.findByTripId(tripId)
                 .stream()
@@ -69,6 +82,17 @@ public class TripPreferenceServiceImpl implements TripPreferenceService {
                 .tripId(tripId)
                 .preferences(preferences)
                 .build();
+    }
+
+    private void assertUserOwnsTrip(Trip trip, Long userId) {
+        if (userId == null) {
+            throw new com.planmytrip.trip_service.exception.UnauthorizedException(
+                    "User authentication is required");
+        }
+        if (!userId.equals(trip.getUserId())) {
+            throw new com.planmytrip.trip_service.exception.UnauthorizedException(
+                    "You do not have permission to access or modify this trip");
+        }
     }
 
     private Trip getTripOrThrow(UUID tripId) {
