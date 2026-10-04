@@ -1,14 +1,11 @@
 package com.planmytrip.trip_service.dto.response;
 
 import java.util.UUID;
-
 import com.planmytrip.trip_service.enums.TripType;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 
 @Data
@@ -23,7 +20,14 @@ public class DestinationResponse implements Serializable {
     private String name;
     private String country;
     private String imageUrl;
+    private String image;
     private TripType persona;
     private Integer popularityRank;
+    private Double rating;
+    private String tag;
+    private String priceFrom;
 
+    public String getImage() {
+        return image != null ? image : imageUrl;
+    }
 }
