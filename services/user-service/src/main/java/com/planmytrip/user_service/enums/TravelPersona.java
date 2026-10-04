@@ -6,14 +6,18 @@ public enum TravelPersona {
     SOLO,
     COUPLE,
     FRIENDS,
-    FAMILY;
+    FAMILY,
+    ADVENTURE;
 
     @JsonCreator
     public static TravelPersona from(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return TravelPersona.valueOf(value.trim().toUpperCase());
+        try {
+            return TravelPersona.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
-

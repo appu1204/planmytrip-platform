@@ -7,7 +7,8 @@ public enum TripType {
     SOLO,
     COUPLE,
     FRIENDS,
-    FAMILY;
+    FAMILY,
+    ADVENTURE;
 
     @JsonCreator
     public static TripType fromString(String value) {
@@ -17,8 +18,8 @@ public enum TripType {
         try {
             return TripType.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown trip type: '" + value + "'. Allowed values: SOLO, COUPLE, FRIENDS, FAMILY");
+            // Graceful fallback for unrecognized persona names
+            return null;
         }
     }
 }
-
