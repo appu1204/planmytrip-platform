@@ -29,6 +29,10 @@ public class RouteValidator {
             // Public "browse without login" endpoints
             "/api/trip/popular",
             "/trips/popular",
+            "/api/trip/itineraries/generate",
+            "/itineraries/generate",
+            "/api/v1/ai-itinerary/generate",
+            "/api/trip/trips/weather/check",
 
             // Gateway/actuator health checks
             "/actuator/health",

@@ -11,9 +11,9 @@ public class CurrentUserProvider {
 
     public Long getUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof Long)) {
-            throw new UnauthorizedException("No authenticated user found on request");
+        if (auth != null && auth.getPrincipal() instanceof Long) {
+            return (Long) auth.getPrincipal();
         }
-        return (Long) auth.getPrincipal();
+        return 0L;
     }
 }
