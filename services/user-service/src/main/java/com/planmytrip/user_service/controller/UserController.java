@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
  */
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping({"/users", ""})
 @RequiredArgsConstructor
 public class UserController {
 
@@ -43,7 +43,7 @@ public class UserController {
      * @return ApiResponse<UserResponse>
      */
 
-    @GetMapping("/me")
+    @GetMapping({"/me", "/profile", "/users/me"})
     public ResponseEntity<ApiResponse<UserResponse>> getProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -68,7 +68,7 @@ public class UserController {
      * @return ApiResponse<UserResponse>
      */
 
-    @PutMapping("/me")
+    @PutMapping({"/me", "/profile", "/users/me"})
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
@@ -94,7 +94,7 @@ public class UserController {
      * @return ApiResponse<Void>
      */
 
-    @PutMapping("/me/change-password")
+    @PutMapping({"/me/change-password", "/change-password", "/users/me/change-password"})
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request) {
@@ -105,7 +105,7 @@ public class UserController {
     }
 
     /**
-     * PUT /api/users/me/persona
+     * PUT /api/users/me/persona or /api/user/persona
      *
      * Update user's travel persona (drives homepage theme).
      *
@@ -119,7 +119,7 @@ public class UserController {
      * @param request UpdatePersonaRequest
      * @return ApiResponse<UserResponse>
      */
-    @PutMapping("/me/persona")                                  // ← /me/persona (consistent with other endpoints)
+    @PutMapping({"/me/persona", "/persona", "/users/me/persona"})
     public ResponseEntity<ApiResponse<UserResponse>> updatePersona(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdatePersonaRequest request) {
