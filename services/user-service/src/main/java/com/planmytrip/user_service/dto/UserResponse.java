@@ -27,4 +27,8 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private TravelPersona travelPersona;
+
+    public String getPersona() {
+        return travelPersona != null ? travelPersona.name().toLowerCase() : null;
+    }
 }

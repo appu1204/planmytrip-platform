@@ -1,5 +1,6 @@
 package com.planmytrip.user_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.planmytrip.user_service.enums.TravelPersona;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -8,5 +9,6 @@ import lombok.Data;
 public class UpdatePersonaRequest {
 
     @NotNull(message = "Persona must not be null")
+    @JsonAlias({"travelPersona", "type", "travel_persona"})
     private TravelPersona persona;
 }
