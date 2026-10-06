@@ -5,6 +5,7 @@ import com.planmytrip.user_service.dto.*;
 import com.planmytrip.user_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,6 +48,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.failure("Unauthorized"));
+        }
+
         return ResponseEntity.ok(
                 userService.getProfile(userDetails.getUsername())
         );
@@ -72,6 +78,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.failure("Unauthorized"));
+        }
 
         return ResponseEntity.ok(
                 userService.updateProfile(userDetails.getUsername(), request)
@@ -99,8 +110,32 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request) {
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.failure("Unauthorized"));
+        }
+
         return ResponseEntity.ok(
                 userService.changePassword(userDetails.getUsername(), request)
+        );
+    }
+
+    /**
+     * GET /api/users/me/persona or /api/user/persona
+     *
+     * Get user's travel persona.
+     */
+    @GetMapping({"/me/persona", "/persona", "/users/me/persona"})
+    public ResponseEntity<ApiResponse<UserResponse>> getPersona(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.failure("Unauthorized"));
+        }
+
+        return ResponseEntity.ok(
+                userService.getProfile(userDetails.getUsername())
         );
     }
 
@@ -123,6 +158,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> updatePersona(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdatePersonaRequest request) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.failure("Unauthorized"));
+        }
 
         return ResponseEntity.ok(
                 userService.updatePersona(userDetails.getUsername(), request)

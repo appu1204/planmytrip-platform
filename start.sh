@@ -29,10 +29,10 @@ else
     export MYSQL_PASSWORD=""
 fi
 
-# 2. Ultra-lean JVM flags for Render Free Tier (512MB RAM constraint)
+# 2. Optimized JVM flags for Render Free Tier (512MB RAM constraint)
 # -XX:TieredStopAtLevel=1 disables C2 compiler, cutting startup memory and CPU by >50%
-JVM_OPTS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -Xms20m -Xmx60m -XX:MaxMetaspaceSize=55m -XX:ReservedCodeCacheSize=18m -XX:+ExitOnOutOfMemoryError"
-GATEWAY_OPTS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -Xms24m -Xmx75m -XX:MaxMetaspaceSize=60m -XX:ReservedCodeCacheSize=20m -XX:+ExitOnOutOfMemoryError"
+JVM_OPTS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -Xms20m -Xmx80m -XX:MaxMetaspaceSize=70m -XX:ReservedCodeCacheSize=20m -XX:+ExitOnOutOfMemoryError"
+GATEWAY_OPTS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -Xms20m -Xmx64m -XX:MaxMetaspaceSize=60m -XX:ReservedCodeCacheSize=20m -XX:+ExitOnOutOfMemoryError"
 
 export USER_SERVICE_URL="http://127.0.0.1:8081"
 export TRIP_SERVICE_URL="http://127.0.0.1:8082"
@@ -42,7 +42,7 @@ PUBLIC_PORT=${PORT:-10000}
 
 # 3. Start Gateway FIRST so Render port scanner detects it immediately!
 echo ">> Starting API Gateway immediately on public port ${PUBLIC_PORT}..."
-java $GATEWAY_OPTS -Dserver.port=${PUBLIC_PORT} -jar /app/gateway-service.jar &
+java $GATEWAY_OPTS -Dserver.port=${PUBLIC_PORT} -jar /app/gateway-service.jar 2>&1 | sed 's/^/[GATEWAY] /' &
 GATEWAY_PID=$!
 
 # Brief pause to allow Gateway to bind the port
@@ -50,17 +50,17 @@ sleep 3
 
 # 4. Start downstream microservices sequentially to avoid concurrent peak memory spikes
 echo ">> Starting User Service on port 8081..."
-PORT=8081 java $JVM_OPTS -jar /app/user-service.jar > /tmp/user-service.log 2>&1 &
+java $JVM_OPTS -Dserver.port=8081 -jar /app/user-service.jar 2>&1 | sed 's/^/[USER-SVC] /' &
 USER_PID=$!
-sleep 2
+sleep 3
 
 echo ">> Starting Trip Service on port 8082..."
-PORT=8082 java $JVM_OPTS -jar /app/trip-service.jar > /tmp/trip-service.log 2>&1 &
+java $JVM_OPTS -Dserver.port=8082 -jar /app/trip-service.jar 2>&1 | sed 's/^/[TRIP-SVC] /' &
 TRIP_PID=$!
-sleep 2
+sleep 3
 
 echo ">> Starting AI Itinerary Service on port 8083..."
-PORT=8083 java $JVM_OPTS -jar /app/ai-itinerary-service.jar > /tmp/ai-service.log 2>&1 &
+java $JVM_OPTS -Dserver.port=8083 -jar /app/ai-itinerary-service.jar 2>&1 | sed 's/^/[AI-SVC] /' &
 AI_PID=$!
 
 echo "========================================================="
@@ -69,3 +69,4 @@ echo "========================================================="
 
 # Keep container alive by waiting for Gateway process
 wait $GATEWAY_PID
+

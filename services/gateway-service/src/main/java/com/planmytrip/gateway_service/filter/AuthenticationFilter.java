@@ -35,7 +35,24 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
 
         if (!routeValidator.isSecured.test(request)) {
-            // Strip any external X-User-Id on open endpoints to prevent header spoofing
+            String authHeader = request.getHeaders().getFirst("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                try {
+                    String token = authHeader.substring(7);
+                    Claims claims = jwtUtil.validateAndExtractClaims(token);
+                    String userId = jwtUtil.extractUserId(claims);
+                    if (userId != null) {
+                        ServerHttpRequest authenticated = request.mutate()
+                                .headers(headers -> headers.set("X-User-Id", userId))
+                                .build();
+                        return chain.filter(exchange.mutate().request(authenticated).build());
+                    }
+                } catch (Exception ignored) {
+                    // Fall back to sanitized unauthenticated request
+                }
+            }
+
+            // Strip any external untrusted X-User-Id on open endpoints to prevent header spoofing
             ServerHttpRequest sanitized = request.mutate()
                     .headers(headers -> headers.remove("X-User-Id"))
                     .build();

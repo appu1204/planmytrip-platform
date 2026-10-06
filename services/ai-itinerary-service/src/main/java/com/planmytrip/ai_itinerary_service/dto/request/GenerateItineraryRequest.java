@@ -1,6 +1,7 @@
 package com.planmytrip.ai_itinerary_service.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.*;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GenerateItineraryRequest {
 
     private UUID tripId;
@@ -35,8 +37,10 @@ public class GenerateItineraryRequest {
     @JsonDeserialize(using = FlexibleLocalDateDeserializer.class)
     private LocalDate endDate;
 
-    @NotNull(message = "budget is required")
-    @Positive(message = "budget must be greater than 0")
+    @JsonProperty("durationDays")
+    @JsonAlias({"duration_days", "daysCount"})
+    private Integer durationDays;
+
     private BigDecimal budget;
 
     // Optional nested object
@@ -71,11 +75,22 @@ public class GenerateItineraryRequest {
 
     public LocalDate getEndDate() {
         if (endDate == null) {
-            endDate = getStartDate().plusDays(3);
+            if (durationDays != null && durationDays > 0) {
+                endDate = getStartDate().plusDays(durationDays - 1);
+            } else {
+                endDate = getStartDate().plusDays(3);
+            }
         } else if (startDate != null && endDate.isBefore(startDate)) {
             endDate = startDate.plusDays(1);
         }
         return endDate;
+    }
+
+    public BigDecimal getBudget() {
+        if (budget == null || budget.compareTo(BigDecimal.ZERO) <= 0) {
+            return new BigDecimal("50000");
+        }
+        return budget;
     }
 
     public Travellers getTravellers() {

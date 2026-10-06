@@ -21,6 +21,10 @@ public class FlexibleLocalDateDeserializer extends JsonDeserializer<LocalDate> {
         if (text == null || text.trim().isEmpty()) {
             return null;
         }
-        return LocalDate.parse(text.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+        text = text.trim();
+        if (text.contains("T")) {
+            text = text.substring(0, text.indexOf("T"));
+        }
+        return LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE);
     }
 }
