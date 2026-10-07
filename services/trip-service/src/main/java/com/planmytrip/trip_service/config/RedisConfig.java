@@ -45,4 +45,14 @@ public class RedisConfig {
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
     }
+
+    @Bean
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "simple")
+    public org.springframework.cache.CacheManager simpleCacheManager() {
+        return new org.springframework.cache.concurrent.ConcurrentMapCacheManager(
+                CACHE_POPULAR_DESTINATIONS,
+                CACHE_WEATHER_ADVISORIES,
+                CACHE_TRIPS
+        );
+    }
 }
