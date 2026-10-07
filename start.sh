@@ -29,14 +29,15 @@ else
     export MYSQL_PASSWORD=""
 fi
 
-# 2. Optimized JVM flags for Render Free Tier (512MB RAM constraint)
-# -XX:TieredStopAtLevel=1 disables C2 compiler, cutting startup memory and CPU by >50%
-JVM_OPTS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -Xms16m -Xmx72m -XX:MaxMetaspaceSize=85m"
-GATEWAY_OPTS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -Xms16m -Xmx64m -XX:MaxMetaspaceSize=85m"
+# 2. Production JVM flags (Optimized for AWS / standard Cloud VMs)
+# Enables standard G1GC, full C2 JIT optimization, and healthy heap space
+JVM_OPTS=${JVM_OPTS:-"-Xms128m -Xmx512m -XX:+UseG1GC"}
+GATEWAY_OPTS=${GATEWAY_OPTS:-"-Xms128m -Xmx384m -XX:+UseG1GC"}
 
 export USER_SERVICE_URL="http://127.0.0.1:8081"
 export TRIP_SERVICE_URL="http://127.0.0.1:8082"
 export AI_ITINERARY_SERVICE_URL="http://127.0.0.1:8083"
+
 
 PUBLIC_PORT=${PORT:-10000}
 
