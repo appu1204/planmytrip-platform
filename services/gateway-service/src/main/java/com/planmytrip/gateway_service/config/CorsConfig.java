@@ -21,12 +21,9 @@ public class CorsConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        // Allow any origin pattern (Render, localhost, AWS, etc.)
+        configuration.setAllowedOriginPatterns(List.of("*"));
 
-        configuration.setAllowedOriginPatterns(origins);
 
         configuration.setAllowedMethods(
                 List.of(

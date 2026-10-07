@@ -17,8 +17,9 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow your frontend origin
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        // Allow all origins (Render, localhost, custom domains) with credentials
+        config.setAllowedOriginPatterns(List.of("*"));
+
 
         // Allow all standard HTTP methods + OPTIONS for preflight
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
