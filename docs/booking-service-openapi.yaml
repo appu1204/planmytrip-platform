@@ -1,0 +1,680 @@
+openapi: 3.0.3
+info:
+  title: PlanMyTrip - Booking Service API
+  description: |
+    Booking Service API for PlanMyTrip.
+    Provides endpoints for searching hotels, getting hotel details, booking hotel stays,
+    retrieving booking confirmations, listing user bookings, and processing cancellations
+    across travel modules (Hotel, Flight, Transport, Activity).
+  version: 1.0.0
+servers:
+  - url: http://localhost:8084
+    description: Local Development Server
+
+paths:
+  /api/bookings:
+    get:
+      tags:
+        - Bookings
+      summary: List user bookings
+      description: |
+        Retrieves all bookings belonging to a given user, with optional filters for module
+        (HOTEL, FLIGHT, TRANSPORT, ACTIVITY) and tripId.
+      operationId: listBookings
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: Unique identifier of the user (cannot be blank)
+          schema:
+            type: string
+            example: "usr-123"
+        - name: module
+          in: query
+          required: false
+          description: Optional filter by travel module
+          schema:
+            type: string
+            enum: [HOTEL, FLIGHT, TRANSPORT, ACTIVITY]
+            example: "HOTEL"
+        - name: tripId
+          in: query
+          required: false
+          description: Optional filter by trip identifier
+          schema:
+            type: string
+            example: "trip-456"
+      responses:
+        '200':
+          description: List of bookings matching the query criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingResponseDto'
+        '400':
+          description: Missing or blank userId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 400
+                errorCode: "VALIDATION_ERROR"
+                message: "userId cannot be blank"
+                timestamp: "2026-10-12T12:00:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/bookings/{bookingId}:
+    get:
+      tags:
+        - Bookings
+      summary: View booking confirmation
+      description: |
+        Retrieves booking confirmation details by booking ID.
+        Provides proof of reservation after payment for any booked module (Hotel, Flight, Transport, Activity).
+        The confirmation response structure is identical across all modules.
+      operationId: getBookingConfirmation
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          description: Unique identifier of the booking (cannot be blank)
+          schema:
+            type: string
+            example: "bkg-hotel-12345"
+      responses:
+        '200':
+          description: Booking confirmation successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponseDto'
+              examples:
+                hotelBooking:
+                  summary: Hotel Booking Confirmation
+                  value:
+                    bookingId: "bkg-hotel-12345"
+                    module: "HOTEL"
+                    status: "CONFIRMED"
+                    referenceNo: "PMT-HTL-8823041"
+                    itemName: "Kumarakom Lake Resort"
+                    startDate: "2026-11-01"
+                    endDate: "2026-11-05"
+                    amount: 25000.00
+                    currency: "INR"
+                flightBooking:
+                  summary: Flight Booking Confirmation
+                  value:
+                    bookingId: "bkg-flt-98765"
+                    module: "FLIGHT"
+                    status: "CONFIRMED"
+                    referenceNo: "PMT-FLT-1029384"
+                    itemName: "Air India AI-101 DEL -> BLR"
+                    startDate: "2026-12-10"
+                    endDate: "2026-12-10"
+                    amount: 7500.00
+                    currency: "INR"
+        '400':
+          description: Invalid input / Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 400
+                errorCode: "VALIDATION_ERROR"
+                message: "Booking ID cannot be blank"
+                timestamp: "2026-10-12T12:00:00Z"
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 404
+                errorCode: "BOOKING_NOT_FOUND"
+                message: "Booking not found: bkg-unknown-999"
+                timestamp: "2026-10-12T12:00:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+    delete:
+      tags:
+        - Bookings
+      summary: Cancel booking
+      description: |
+        Cancels an existing booking, applies module cancellation and refund rules,
+        triggers refund processing via payment client if eligible, and transitions booking status to CANCELLED.
+      operationId: cancelBooking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          description: Unique identifier of the booking (cannot be blank)
+          schema:
+            type: string
+            example: "bkg-hotel-12345"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelBookingRequestDto'
+            example:
+              reason: "Sudden plan change due to emergency"
+      responses:
+        '200':
+          description: Booking successfully cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancellationResultDto'
+              example:
+                bookingId: "bkg-hotel-12345"
+                status: "CANCELLED"
+                refundEligible: true
+                refundAmount: 25000.00
+                refundStatus: "INITIATED"
+        '400':
+          description: Validation error in request body or path
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 400
+                errorCode: "VALIDATION_ERROR"
+                message: "cancellation reason is required"
+                timestamp: "2026-10-12T12:00:00Z"
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 404
+                errorCode: "BOOKING_NOT_FOUND"
+                message: "Booking not found: bkg-hotel-12345"
+                timestamp: "2026-10-12T12:00:00Z"
+        '409':
+          description: Conflict / Booking is already cancelled or failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 409
+                errorCode: "INVALID_STATE"
+                message: "Booking bkg-hotel-12345 is already cancelled"
+                timestamp: "2026-10-12T12:00:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/bookings/hotels/search:
+    get:
+      tags:
+        - Hotel Booking
+      summary: Search available hotels
+      description: Searches available hotels for a given destination and date range with pagination and price filtering.
+      operationId: searchHotels
+      parameters:
+        - name: destination
+          in: query
+          required: true
+          description: Destination city or locality
+          schema:
+            type: string
+            example: "Goa"
+        - name: checkIn
+          in: query
+          required: true
+          description: Check-in date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-11-01"
+        - name: checkOut
+          in: query
+          required: true
+          description: Check-out date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-11-05"
+        - name: adults
+          in: query
+          required: false
+          description: Number of adult guests (min 1)
+          schema:
+            type: integer
+            default: 1
+            example: 2
+        - name: children
+          in: query
+          required: false
+          description: Number of children (min 0)
+          schema:
+            type: integer
+            default: 0
+            example: 0
+        - name: minPrice
+          in: query
+          required: false
+          description: Minimum price filter
+          schema:
+            type: number
+            example: 2000.00
+        - name: maxPrice
+          in: query
+          required: false
+          description: Maximum price filter
+          schema:
+            type: number
+            example: 15000.00
+        - name: page
+          in: query
+          required: false
+          description: 0-based page index
+          schema:
+            type: integer
+            default: 0
+            example: 0
+        - name: size
+          in: query
+          required: false
+          description: Page size
+          schema:
+            type: integer
+            default: 20
+            example: 10
+      responses:
+        '200':
+          description: Paginated search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HotelSearchPageResponse'
+        '400':
+          description: Validation error in search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '503':
+          description: Hotel provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/bookings/hotels/{hotelId}:
+    get:
+      tags:
+        - Hotel Booking
+      summary: Get hotel details
+      description: Returns full details, amenities, room types, and pricing for a specific hotel and date range.
+      operationId: getHotelDetails
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          description: Unique hotel identifier
+          schema:
+            type: string
+            example: "1000"
+        - name: checkIn
+          in: query
+          required: true
+          description: Check-in date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-11-01"
+        - name: checkOut
+          in: query
+          required: true
+          description: Check-out date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-11-05"
+      responses:
+        '200':
+          description: Hotel details and available room types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HotelDetailDto'
+        '404':
+          description: Hotel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/bookings/hotels/book:
+    post:
+      tags:
+        - Hotel Booking
+      summary: Book a hotel stay
+      description: Reserves a hotel room, processes payment, and confirms the booking.
+      operationId: bookHotel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HotelBookingRequestDto'
+            example:
+              userId: "usr_test_101"
+              tripId: "trip_001"
+              hotelId: "1000"
+              roomTypeId: "STD-DBL"
+              checkIn: "2026-11-01"
+              checkOut: "2026-11-05"
+              adults: 2
+              children: 0
+              guestFullName: "John Doe"
+              guestEmail: "john.doe@example.com"
+              guestPhone: "+919876543210"
+              specialRequests: "Quiet room preferred"
+      responses:
+        '201':
+          description: Hotel booking successfully created and confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponseDto'
+        '400':
+          description: Validation error in booking payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Requested room type is no longer available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+components:
+  schemas:
+    CancelBookingRequestDto:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: The reason for booking cancellation
+          example: "Change of travel plans"
+
+    CancellationResultDto:
+      type: object
+      properties:
+        bookingId:
+          type: string
+          example: "bkg-hotel-12345"
+        status:
+          type: string
+          example: "CANCELLED"
+        refundEligible:
+          type: boolean
+          example: true
+        refundAmount:
+          type: number
+          format: decimal
+          example: 25000.00
+        refundStatus:
+          type: string
+          example: "INITIATED"
+
+    BookingResponseDto:
+      type: object
+      description: Uniform booking confirmation returned across Hotel, Flight, Transport, and Activity.
+      properties:
+        bookingId:
+          type: string
+          example: "bkg-hotel-12345"
+        module:
+          type: string
+          enum: [HOTEL, FLIGHT, TRANSPORT, ACTIVITY]
+          example: "HOTEL"
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, CANCELLED, FAILED]
+          example: "CONFIRMED"
+        referenceNo:
+          type: string
+          example: "PMT-HTL-8823041"
+        itemName:
+          type: string
+          example: "Kumarakom Lake Resort"
+        startDate:
+          type: string
+          format: date
+          example: "2026-11-01"
+        endDate:
+          type: string
+          format: date
+          example: "2026-11-05"
+        amount:
+          type: number
+          format: decimal
+          example: 25000.00
+        currency:
+          type: string
+          example: "INR"
+
+    HotelBookingRequestDto:
+      type: object
+      required:
+        - userId
+        - hotelId
+        - roomTypeId
+        - checkIn
+        - checkOut
+        - guestFullName
+        - guestEmail
+        - guestPhone
+      properties:
+        userId:
+          type: string
+          example: "usr_test_101"
+        tripId:
+          type: string
+          example: "trip_001"
+        hotelId:
+          type: string
+          example: "1000"
+        roomTypeId:
+          type: string
+          example: "STD-DBL"
+        checkIn:
+          type: string
+          format: date
+          example: "2026-11-01"
+        checkOut:
+          type: string
+          format: date
+          example: "2026-11-05"
+        adults:
+          type: integer
+          default: 1
+          example: 2
+        children:
+          type: integer
+          default: 0
+          example: 0
+        guestFullName:
+          type: string
+          example: "John Doe"
+        guestEmail:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        guestPhone:
+          type: string
+          example: "+919876543210"
+        specialRequests:
+          type: string
+          example: "High floor"
+
+    HotelSearchPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/HotelSearchResultDto'
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 10
+        totalElements:
+          type: integer
+          example: 45
+        totalPages:
+          type: integer
+          example: 5
+        first:
+          type: boolean
+          example: true
+        last:
+          type: boolean
+          example: false
+
+    HotelSearchResultDto:
+      type: object
+      properties:
+        hotelId:
+          type: string
+          example: "1000"
+        name:
+          type: string
+          example: "Taj Exotica Resort & Spa"
+        location:
+          type: string
+          example: "Benaulim, Goa"
+        ratingScore:
+          type: number
+          example: 4.8
+        reviewCount:
+          type: integer
+          example: 320
+        pricePerNight:
+          type: number
+          format: decimal
+          example: 18500.00
+        currency:
+          type: string
+          example: "INR"
+        amenities:
+          type: array
+          items:
+            type: string
+          example: ["Pool", "Spa", "Free WiFi", "Beachfront"]
+        freeCancellation:
+          type: boolean
+          example: true
+
+    HotelDetailDto:
+      type: object
+      properties:
+        hotelId:
+          type: string
+          example: "1000"
+        name:
+          type: string
+          example: "Taj Exotica Resort & Spa"
+        location:
+          type: string
+          example: "Benaulim, Goa"
+        ratingScore:
+          type: number
+          example: 4.8
+        reviewCount:
+          type: integer
+          example: 320
+        amenities:
+          type: array
+          items:
+            type: string
+          example: ["Pool", "Spa", "Free WiFi"]
+        roomTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomTypeDto'
+        cancellationPolicy:
+          type: string
+          example: "Free cancellation up to 48 hours before check-in"
+
+    RoomTypeDto:
+      type: object
+      properties:
+        roomTypeId:
+          type: string
+          example: "STD-DBL"
+        name:
+          type: string
+          example: "Deluxe Sea View Room"
+        description:
+          type: string
+          example: "King size bed with private balcony"
+        capacityAdults:
+          type: integer
+          example: 2
+        capacityChildren:
+          type: integer
+          example: 1
+        pricePerNight:
+          type: number
+          format: decimal
+          example: 18500.00
+        totalPrice:
+          type: number
+          format: decimal
+          example: 74000.00
+        currency:
+          type: string
+          example: "INR"
+        available:
+          type: boolean
+          example: true
+
+    ApiError:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 404
+        errorCode:
+          type: string
+          example: "BOOKING_NOT_FOUND"
+        message:
+          type: string
+          example: "Booking not found: bkg-unknown-999"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-10-12T12:00:00Z"
