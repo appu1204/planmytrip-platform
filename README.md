@@ -64,3 +64,32 @@ planmytrip-platform/
 ├── start.sh                      # Automation script
 ├── pom.xml                       # Root parent POM
 └── README.md                     # Project documentation
+
+
+Branching Strategy
+The repository follows a standard Git Flow workflow:
+
+main: Production-ready releases.
+develop: Integration branch for testing and QA verification.
+feature/<service-name>: Core service development branch.
+feature/<service-name>-<module-name>: Scoped module development branch (e.g., feature/booking-service-hotel-module).
+
+Local Development Setup
+Prerequisites
+JDK 17
+Apache Maven 3.8+
+Docker and Docker Compose
+MySQL instance (local or remote Aiven connection)
+Running a Service Locally
+Navigate to the target service directory:
+cd services/booking-service
+mvn clean compile
+mvn spring-boot:run
+
+
+Running Tests
+Execute unit and integration tests across services:
+mvn test
+
+API Documentation
+API definitions are maintained in OpenAPI 3.0 format. Import docs/booking-service-openapi.yaml into Postman or any OpenAPI viewer to inspect endpoints, schemas, and test responses.
