@@ -4,7 +4,7 @@ A scalable AI-powered travel planning platform built using a microservices archi
 
 ## Tech Stack
 
-- Java 21
+- Java 17
 - Spring Boot
 - Spring Cloud
 - MySQL
